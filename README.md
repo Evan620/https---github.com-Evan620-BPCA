@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Building Plan Compliance Analysis SaaS
 
-## Getting Started
+AI-powered building plan compliance analysis platform built with Next.js, Supabase, and n8n.
 
-First, run the development server:
+## 🚀 Quick Start
 
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd "UILDING PLAN COMPLIANCE ANALYSIS SaaS"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Set up environment variables**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy the example environment file:
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+Then edit `.env.local` and add your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
 
-To learn more about Next.js, take a look at the following resources:
+> **Important**: Never commit `.env.local` to version control. It's already in `.gitignore`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Run the development server**
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## Deploy on Vercel
+## 📦 Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Deploying to Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push your code to GitHub (without `.env.local`)
+2. Import your repository in Vercel
+3. Add environment variables in Vercel dashboard:
+   - Go to Project Settings → Environment Variables
+   - Add `NEXT_PUBLIC_SUPABASE_URL`
+   - Add `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy!
+
+### Deploying to Other Platforms
+
+For other platforms (Netlify, Railway, etc.), add the same environment variables in their respective dashboards.
+
+## 🔐 Security Notes
+
+- **Never commit** `.env.local` or any file containing secrets
+- The `.env.example` file is safe to commit (contains no real credentials)
+- Supabase anon keys are safe to expose in client-side code (they have Row Level Security)
+- For production, consider using Supabase's service role key only on the server side
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React, TailwindCSS, shadcn/ui
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Workflow**: n8n
+- **Forms**: React Hook Form + Zod
+- **State**: TanStack Query + Zustand
+
+## 📁 Project Structure
+
+```
+├── app/
+│   ├── (auth)/          # Authentication pages
+│   ├── layout.tsx       # Root layout
+│   └── globals.css      # Global styles
+├── components/
+│   ├── auth/            # Auth components
+│   └── ui/              # shadcn/ui components
+├── lib/
+│   ├── supabase/        # Supabase clients
+│   └── utils.ts         # Utility functions
+└── types/               # TypeScript types
+```
+
+## 🎨 Features
+
+- ✅ Authentication (Login, Signup, Password Reset)
+- ✅ Blueprint-style UI design
+- ✅ Form validation
+- ✅ Responsive design
+- 🚧 Dashboard (coming soon)
+- 🚧 Project management (coming soon)
+- 🚧 AI analysis workflow (coming soon)
+
+## 📝 License
+
+MIT
