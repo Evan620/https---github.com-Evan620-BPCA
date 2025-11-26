@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 
 interface ScoreCardProps {
@@ -39,7 +38,15 @@ export function ScoreCard({ score, totalViolations, criticalViolations }: ScoreC
                         {totalViolations} Issues Found
                     </span>
                 </div>
-                <Progress value={score} className="h-2" indicatorClassName={getProgressColor(score)} />
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-primary/20">
+                    <div 
+                        className="h-full transition-all"
+                        style={{
+                            width: `${score}%`,
+                            backgroundColor: getProgressColor(score).replace('bg-', ''),
+                        }}
+                    />
+                </div>
 
                 <div className="mt-4 flex gap-4 text-sm">
                     <div className="flex items-center gap-2">
