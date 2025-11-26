@@ -14,7 +14,7 @@ export default function AnalysisLoadingPage() {
     const projectId = params.id as string
     const analysisId = searchParams.get("analysisId")
 
-    const [currentStatus, setCurrentStatus] = useState<"processing" | "completed" | "failed">("processing")
+    const [currentStatus, setCurrentStatus] = useState<"uploading" | "processing" | "analyzing" | "generating" | "completed">("uploading")
 
     useEffect(() => {
         if (!analysisId) {
@@ -48,6 +48,8 @@ export default function AnalysisLoadingPage() {
                             alert("Analysis failed. Please try again.")
                             router.push(`/dashboard/project/${projectId}`)
                         }, 2000)
+                    } else {
+                        setCurrentStatus(newStatus as any)
                     }
                 }
             )
