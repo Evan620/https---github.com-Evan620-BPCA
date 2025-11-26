@@ -8,7 +8,7 @@ create table if not exists public.settings (
     unique(user_id)
 );
 
--- Enable RLS
+-- Enable R
 alter table public.settings enable row level security;
 
 -- Policies
