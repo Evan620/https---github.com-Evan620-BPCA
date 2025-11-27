@@ -106,7 +106,7 @@ export function ViolationsSidebar({ violations, onSelectViolation, selectedViola
                                         <p className="font-medium text-sm leading-tight break-words">{violation.title}</p>
                                         <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 mt-0.5">Pg {violation.page}</span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground line-clamp-2 break-words">
+                                    <p className={cn("text-xs text-muted-foreground break-words", selectedViolationId !== violation.id && "line-clamp-2")}>
                                         {violation.description}
                                     </p>
                                     <Badge variant="outline" className="text-[10px] min-h-5 h-auto whitespace-normal text-left py-1 break-words leading-tight">
