@@ -44,12 +44,28 @@ export async function POST(request: Request) {
 
         // Update analysis status
         console.log('Updating analysis status:', { analysisId, status })
+
+        // Prepare update data
+        const updateData: any = {
+            status,
+            updated_at: new Date().toISOString(),
+        }
+
+        // If completed, extract summary data from result
+        if (status === "completed" && result) {
+            const score = result.overall_assessment?.compliance_score || 0
+            const allIssues = [...(result.violations || []), ...(result.warnings || [])]
+            const violationsCount = allIssues.length
+
+            updateData.score = score
+            updateData.violations = violationsCount
+
+            console.log('Extracted summary data:', { score, violationsCount })
+        }
+
         const { error } = await supabase
             .from("analyses")
-            .update({
-                status,
-                updated_at: new Date().toISOString(),
-            })
+            .update(updateData)
             .eq("id", analysisId)
 
         if (error) {
