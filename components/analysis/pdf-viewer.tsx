@@ -52,29 +52,30 @@ export function PDFViewer({ url, violations, selectedViolationId }: PDFViewerPro
                         transformOrigin: "center top"
                     }}
                 >
-                    {/* Mock PDF Content */}
-                    <div className="absolute inset-0 p-12 border m-4 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300">
-                        <p className="text-2xl font-bold mb-4">BUILDING PLAN PDF</p>
-                        <p>Page {page}</p>
-                    </div>
+                    {/* PDF Content */}
+                    <iframe
+                        src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
+                        className="absolute inset-0 w-full h-full"
+                        title="Building Plan"
+                    />
 
                     {/* Violation Overlays */}
                     {violations
                         .filter(v => v.page === page)
-                        .map((v) => (
+                        .map((v, index) => (
                             <div
                                 key={v.id}
-                                className={`absolute w-8 h-8 -ml-4 -mt-4 rounded-full flex items-center justify-center cursor-pointer transition-all
+                                className={`absolute w-8 h-8 -ml-4 -mt-4 rounded-full flex items-center justify-center cursor-pointer transition-all z-10
                   ${selectedViolationId === v.id
-                                        ? "bg-primary text-primary-foreground scale-125 z-10 shadow-lg ring-4 ring-primary/20"
+                                        ? "bg-primary text-primary-foreground scale-125 shadow-lg ring-4 ring-primary/20"
                                         : v.severity === "critical"
-                                            ? "bg-red-500/20 border-2 border-red-500 text-red-700"
-                                            : "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-700"
+                                            ? "bg-red-500 border-2 border-white text-white shadow-md"
+                                            : "bg-yellow-500 border-2 border-white text-white shadow-md"
                                     }`}
                                 style={{ left: v.x, top: v.y }}
                                 title={v.title}
                             >
-                                {v.id}
+                                {index + 1}
                             </div>
                         ))}
                 </div>

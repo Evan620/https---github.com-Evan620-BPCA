@@ -72,22 +72,25 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             const jsonReport = report.json_report
 
             // Parse the report data from n8n
-            // Expecting format: { score, violations: [...], summary, etc }
-            const violations: Violation[] = (jsonReport.violations || []).map((v: any, index: number) => ({
+            // JSON structure: { overall_assessment: { compliance_score: ... }, violations: [{ requirement: ..., details: ..., ... }] }
+
+            const rawViolations = [...(jsonReport.violations || []), ...(jsonReport.warnings || [])];
+
+            const violations: Violation[] = rawViolations.map((v: any, index: number) => ({
                 id: v.id || `violation-${index}`,
-                title: v.title || v.description?.substring(0, 50) || "Violation",
-                description: v.description || "",
-                severity: v.severity || "warning",
-                code: v.code || v.citation || "",
+                title: v.requirement || "Violation",
+                description: v.details || v.recommendation || "",
+                severity: v.status === "VIOLATION" ? "critical" : "warning",
+                code: v.code_reference || "",
                 page: v.page || 1,
-                x: v.x || "30%",
-                y: v.y || "40%"
+                x: v.x || "50%", // Default to center if no coordinates
+                y: v.y || "50%"
             }))
 
             const criticalCount = violations.filter(v => v.severity === "critical").length
 
             setReportData({
-                score: jsonReport.score || 0,
+                score: jsonReport.overall_assessment?.compliance_score || 0,
                 violations,
                 totalViolations: violations.length,
                 criticalViolations: criticalCount,
@@ -100,6 +103,19 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleShare = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href)
+            alert("Link copied to clipboard!")
+        } catch (err) {
+            console.error("Failed to copy link:", err)
+        }
+    }
+
+    const handleExport = () => {
+        window.print()
     }
 
     if (loading) {
@@ -136,7 +152,7 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
     return (
         <div className="flex flex-col h-screen bg-background">
             {/* Header */}
-            <div className="h-16 border-b flex items-center justify-between px-6 bg-background/95 backdrop-blur z-10">
+            <div className="h-16 border-b flex items-center justify-between px-6 bg-background/95 backdrop-blur z-10 print:hidden">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
                         <ArrowLeft className="h-4 w-4" />
@@ -144,19 +160,15 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                     <div>
                         <h1 className="font-semibold">Analysis Results</h1>
                         <p className="text-xs text-muted-foreground">
-                            Score: {reportData.score}% • {reportData.totalViolations} Violations
+                            Score: {reportData.score}% • {reportData.totalViolations} Issues
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={handleShare}>
                         <Share2 className="mr-2 h-4 w-4" /> Share
                     </Button>
-                    <Button size="sm" onClick={() => {
-                        if (reportData.annotatedPdfUrl) {
-                            window.open(reportData.annotatedPdfUrl, '_blank')
-                        }
-                    }}>
+                    <Button size="sm" onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" /> Export Report
                     </Button>
                 </div>
