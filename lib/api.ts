@@ -95,9 +95,6 @@ export async function getProjectAnalyses(projectId: string) {
         return {
             ...analysis,
             version_number: version?.version_number || 0,
-            // Mock score/violations for now until we have report parsing
-            score: analysis.status === 'completed' ? 85 : undefined,
-            violations: analysis.status === 'completed' ? 3 : undefined,
         }
     })
 }
