@@ -1,6 +1,9 @@
--- Update existing analyses with correct score and violations count from their reports
--- This fixes the discrepancy between the analysis history and detailed results
+-- Step 1: Add score and violations columns to analyses table
+ALTER TABLE analyses
+ADD COLUMN IF NOT EXISTS score INTEGER,
+ADD COLUMN IF NOT EXISTS violations INTEGER;
 
+-- Step 2: Update existing analyses with correct score and violations count from their reports
 UPDATE analyses
 SET 
     score = (reports.json_report->'overall_assessment'->>'compliance_score')::numeric,
@@ -12,3 +15,7 @@ FROM reports
 WHERE analyses.id = reports.analysis_id
   AND analyses.status = 'completed'
   AND reports.json_report IS NOT NULL;
+
+-- Step 3: Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_analyses_score ON analyses(score);
+CREATE INDEX IF NOT EXISTS idx_analyses_violations ON analyses(violations);
