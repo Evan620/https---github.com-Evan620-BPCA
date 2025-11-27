@@ -41,7 +41,6 @@ export async function createAnalysis(
         .insert({
             version_id: version.id,
             status: "processing",
-            building_codes: selectedCodes,
             pdf_url: fileUrl
         })
         .select()
