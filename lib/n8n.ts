@@ -17,7 +17,14 @@ export async function triggerAnalysisWorkflow(analysisId: string, pdfUrl: string
                 analysisId,
                 pdfUrl,
                 selectedCodes,
-                callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')}/api/webhooks/analysis-update`,
+                // Prioritize NEXT_PUBLIC_APP_URL, then VERCEL_URL, then localhost
+                callbackUrl: (() => {
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
+                        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+                    const url = `${baseUrl}/api/webhooks/analysis-update`;
+                    console.log('🔗 Generated Callback URL:', url); // Debug log
+                    return url;
+                })(),
             }),
         })
 
