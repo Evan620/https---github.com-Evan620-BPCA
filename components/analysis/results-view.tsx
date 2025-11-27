@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Download, Share2, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { downloadComplianceReport } from "@/lib/pdf-generator"
 
 interface Violation {
     id: string
@@ -38,6 +39,8 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
     const supabase = createClient()
     const [selectedViolationId, setSelectedViolationId] = useState<string>()
     const [reportData, setReportData] = useState<ReportData | null>(null)
+    const [rawJsonReport, setRawJsonReport] = useState<any>(null)
+    const [projectName, setProjectName] = useState<string>("Building Plan")
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -53,7 +56,7 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             // Fetch the analysis and its report
             const { data: analysis, error: analysisError } = await supabase
                 .from("analyses")
-                .select("*, reports(*)")
+                .select("*, reports(*), projects(name)")
                 .eq("id", analysisId)
                 .single()
 
@@ -63,6 +66,11 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                 throw new Error("Analysis not found")
             }
 
+            // Set project name
+            if (analysis.projects?.name) {
+                setProjectName(analysis.projects.name)
+            }
+
             // Check if report exists
             if (!analysis.reports || analysis.reports.length === 0) {
                 throw new Error("Report not yet available")
@@ -70,6 +78,9 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
 
             const report = analysis.reports[0]
             const jsonReport = report.json_report
+
+            // Store raw JSON for PDF generation
+            setRawJsonReport(jsonReport)
 
             // Parse the report data from n8n
             // JSON structure: { overall_assessment: { compliance_score: ... }, violations: [{ requirement: ..., details: ..., ... }] }
@@ -115,7 +126,11 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
     }
 
     const handleExport = () => {
-        window.print()
+        if (rawJsonReport) {
+            downloadComplianceReport(rawJsonReport, projectName)
+        } else {
+            alert("Report data not available")
+        }
     }
 
     const [sidebarWidth, setSidebarWidth] = useState(400)
