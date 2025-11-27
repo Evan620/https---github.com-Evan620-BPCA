@@ -11,30 +11,44 @@ interface StepCodesProps {
 
 export function StepCodes({ selectedCodes, onCodeToggle }: StepCodesProps) {
     const codes = [
+        // United States
         {
             id: "ibc-2021",
             name: "International Building Code (IBC) 2021",
-            description: "General building safety and fire prevention standards.",
-        },
-        {
-            id: "ada-2010",
-            name: "ADA Standards for Accessible Design 2010",
-            description: "Accessibility requirements for public accommodations.",
+            description: "General building safety, fire, and egress standards.",
+            region: "🇺🇸 United States"
         },
         {
             id: "nfpa-101",
             name: "NFPA 101: Life Safety Code",
-            description: "Strategies to protect people based on building construction.",
+            description: "Fire protection and occupant safety standards.",
+            region: "🇺🇸 United States"
+        },
+        // Australia
+        {
+            id: "ncc-2022-vol1",
+            name: "National Construction Code (NCC) 2022 - Volume 1",
+            description: "Commercial and multi-residential building standards.",
+            region: "🇦🇺 Australia"
         },
         {
-            id: "iecc-2021",
-            name: "International Energy Conservation Code (IECC) 2021",
-            description: "Energy efficiency standards for building envelopes.",
+            id: "as-1428-1",
+            name: "Australian Standard AS 1428.1",
+            description: "Design for access and mobility (accessibility).",
+            region: "🇦🇺 Australia"
+        },
+        // United Kingdom
+        {
+            id: "uk-part-b",
+            name: "UK Building Regulations - Part B (Fire Safety)",
+            description: "Fire safety requirements for buildings.",
+            region: "🇬🇧 United Kingdom"
         },
         {
-            id: "ipc-2021",
-            name: "International Plumbing Code (IPC) 2021",
-            description: "Regulations for plumbing systems and fixtures.",
+            id: "uk-part-m",
+            name: "UK Building Regulations - Part M (Access)",
+            description: "Access to and use of buildings.",
+            region: "🇬🇧 United Kingdom"
         },
     ]
 
@@ -59,13 +73,18 @@ export function StepCodes({ selectedCodes, onCodeToggle }: StepCodesProps) {
                                 checked={selectedCodes.includes(code.id)}
                                 onCheckedChange={() => onCodeToggle(code.id)}
                             />
-                            <div className="grid gap-1.5 leading-none">
-                                <Label
-                                    htmlFor={code.id}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                >
-                                    {code.name}
-                                </Label>
+                            <div className="grid gap-1.5 leading-none flex-1">
+                                <div className="flex items-center gap-2">
+                                    <Label
+                                        htmlFor={code.id}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    >
+                                        {code.name}
+                                    </Label>
+                                    <span className="text-xs text-muted-foreground">
+                                        {code.region}
+                                    </span>
+                                </div>
                                 <p className="text-xs text-muted-foreground">
                                     {code.description}
                                 </p>
