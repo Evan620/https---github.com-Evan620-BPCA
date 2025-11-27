@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { PDFViewer } from "./pdf-viewer"
 import { ViolationsSidebar } from "./violations-sidebar"
 import { ScoreCard } from "./score-card"
@@ -118,6 +118,34 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
         window.print()
     }
 
+    const [sidebarWidth, setSidebarWidth] = useState(400)
+    const isResizing = useRef(false)
+
+    const startResizing = (e: React.MouseEvent) => {
+        e.preventDefault()
+        isResizing.current = true
+        document.body.style.cursor = 'col-resize'
+        document.body.style.userSelect = 'none'
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const newWidth = window.innerWidth - e.clientX
+            if (newWidth > 300 && newWidth < 1200) { // Increased max width
+                setSidebarWidth(newWidth)
+            }
+        }
+
+        const stopResizing = () => {
+            isResizing.current = false
+            document.body.style.cursor = ''
+            document.body.style.userSelect = ''
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseup', stopResizing)
+        }
+
+        document.addEventListener('mousemove', handleMouseMove)
+        document.addEventListener('mouseup', stopResizing)
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
@@ -176,7 +204,7 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Main Content - PDF Viewer */}
-                <div className="flex-1 relative">
+                <div className="flex-1 relative min-w-0">
                     <div className="absolute top-4 left-4 z-10 w-64">
                         <ScoreCard
                             score={reportData.score}
@@ -191,8 +219,19 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                     />
                 </div>
 
+                {/* Resizer Handle */}
+                <div
+                    className="w-1 bg-border hover:bg-primary cursor-col-resize transition-colors z-20 flex items-center justify-center group"
+                    onMouseDown={startResizing}
+                >
+                    <div className="h-8 w-1 bg-muted-foreground/20 group-hover:bg-primary rounded-full" />
+                </div>
+
                 {/* Sidebar - Violations */}
-                <div className="w-96 border-l bg-background">
+                <div
+                    className="border-l bg-background flex-shrink-0"
+                    style={{ width: sidebarWidth }}
+                >
                     <ViolationsSidebar
                         violations={reportData.violations}
                         onSelectViolation={setSelectedViolationId}
