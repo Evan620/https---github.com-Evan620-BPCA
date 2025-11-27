@@ -16,10 +16,10 @@ export function ScoreCard({ score, totalViolations, criticalViolations }: ScoreC
         return "text-red-500"
     }
 
-    const getProgressColor = (score: number) => {
-        if (score >= 90) return "bg-green-500"
-        if (score >= 70) return "bg-yellow-500"
-        return "bg-red-500"
+    const getProgressColorHex = (score: number) => {
+        if (score >= 90) return "#22c55e" // green-500
+        if (score >= 70) return "#eab308" // yellow-500
+        return "#ef4444" // red-500
     }
 
     return (
@@ -39,11 +39,11 @@ export function ScoreCard({ score, totalViolations, criticalViolations }: ScoreC
                     </span>
                 </div>
                 <div className="relative h-2 w-full overflow-hidden rounded-full bg-primary/20">
-                    <div 
+                    <div
                         className="h-full transition-all"
                         style={{
                             width: `${score}%`,
-                            backgroundColor: getProgressColor(score).replace('bg-', ''),
+                            backgroundColor: getProgressColorHex(score),
                         }}
                     />
                 </div>
