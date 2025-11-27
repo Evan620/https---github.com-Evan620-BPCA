@@ -34,7 +34,8 @@ export default function SettingsPage() {
             .from("settings")
             .select("n8n_webhook_url")
             .eq("user_id", user.id)
-            .single()
+            .eq("user_id", user.id)
+            .maybeSingle()
 
         if (data?.n8n_webhook_url) {
             setWebhookUrl(data.n8n_webhook_url)
@@ -55,6 +56,8 @@ export default function SettingsPage() {
                     user_id: user.id,
                     n8n_webhook_url: webhookUrl,
                     updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id'
                 })
 
             if (error) throw error
@@ -165,8 +168,8 @@ export default function SettingsPage() {
                     {/* Test Result */}
                     {testResult && (
                         <div className={`flex items-start gap-3 p-4 rounded-lg border ${testResult.success
-                                ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
-                                : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                            ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                            : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
                             }`}>
                             {testResult.success ? (
                                 <Check className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
@@ -175,8 +178,8 @@ export default function SettingsPage() {
                             )}
                             <div className="flex-1">
                                 <p className={`text-sm font-medium ${testResult.success
-                                        ? "text-green-900 dark:text-green-100"
-                                        : "text-red-900 dark:text-red-100"
+                                    ? "text-green-900 dark:text-green-100"
+                                    : "text-red-900 dark:text-red-100"
                                     }`}>
                                     {testResult.message}
                                 </p>
