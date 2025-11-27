@@ -34,7 +34,6 @@ export default function SettingsPage() {
             .from("settings")
             .select("n8n_webhook_url")
             .eq("user_id", user.id)
-            .eq("user_id", user.id)
             .maybeSingle()
 
         if (data?.n8n_webhook_url) {
@@ -57,10 +56,26 @@ export default function SettingsPage() {
                     n8n_webhook_url: webhookUrl,
                     updated_at: new Date().toISOString()
                 }, {
-                    onConflict: 'user_id'
+                    onConflict: 'user_id',
+                    ignoreDuplicates: false
                 })
 
-            if (error) throw error
+            if (error) {
+                // Fallback: If upsert fails with conflict, try explicit update
+                if (error.code === '23505') {
+                    const { error: updateError } = await supabase
+                        .from("settings")
+                        .update({
+                            n8n_webhook_url: webhookUrl,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq("user_id", user.id)
+
+                    if (updateError) throw updateError
+                } else {
+                    throw error
+                }
+            }
 
             setSaveSuccess(true)
             setTimeout(() => setSaveSuccess(false), 3000)
