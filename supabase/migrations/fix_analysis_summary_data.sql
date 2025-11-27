@@ -1,6 +1,6 @@
 -- Step 1: Add score and violations columns to analyses table
 ALTER TABLE analyses
-ADD COLUMN IF NOT EXISTS score INTEGER,
+ADD COLUMN IF NOT EXISTS score NUMERIC(5,2),
 ADD COLUMN IF NOT EXISTS violations INTEGER;
 
 -- Step 2: Update existing analyses with correct score and violations count from their reports
