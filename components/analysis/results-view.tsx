@@ -56,7 +56,7 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             // Fetch the analysis and its report
             const { data: analysis, error: analysisError } = await supabase
                 .from("analyses")
-                .select("*, reports(*), projects(name)")
+                .select("*, reports(*), project_versions(projects(name))")
                 .eq("id", analysisId)
                 .single()
 
@@ -67,8 +67,8 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             }
 
             // Set project name
-            if (analysis.projects?.name) {
-                setProjectName(analysis.projects.name)
+            if (analysis.project_versions?.projects?.name) {
+                setProjectName(analysis.project_versions.projects.name)
             }
 
             // Check if report exists
