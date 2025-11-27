@@ -28,8 +28,7 @@ export async function createAnalysis(
         .from("project_versions")
         .insert({
             project_id: projectId,
-            version_number: nextVersion,
-            file_url: fileUrl
+            version_number: nextVersion
         })
         .select()
         .single()
@@ -42,7 +41,8 @@ export async function createAnalysis(
         .insert({
             version_id: version.id,
             status: "processing",
-            building_codes: selectedCodes
+            building_codes: selectedCodes,
+            pdf_url: fileUrl
         })
         .select()
         .single()
