@@ -17,10 +17,11 @@ export async function POST(request: Request) {
         return NextResponse.json({ analysisId: analysis.id })
     } catch (error) {
         console.error("Error creating analysis:", error)
+        const errorMessage = error instanceof Error ? error.message : (error as any)?.message || "Unknown error"
         return NextResponse.json(
             {
                 error: "Failed to create analysis",
-                message: error instanceof Error ? error.message : "Unknown error",
+                message: errorMessage,
                 details: error
             },
             { status: 500 }

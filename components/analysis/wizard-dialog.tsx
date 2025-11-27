@@ -68,8 +68,9 @@ export function WizardDialog() {
             })
 
             if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.message || "Failed to create analysis")
+                const errorData = await response.json()
+                console.error("Analysis creation failed details:", errorData)
+                throw new Error(errorData.message || "Failed to create analysis")
             }
 
             const { analysisId } = await response.json()
