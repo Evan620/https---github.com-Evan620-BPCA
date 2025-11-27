@@ -19,13 +19,7 @@ export function PDFViewer({ url, violations, selectedViolationId }: PDFViewerPro
         <div className="flex flex-col h-full bg-muted/20">
             <div className="h-12 border-b bg-background flex items-center justify-between px-4">
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setPage(Math.max(1, page - 1))}>
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm font-medium">Page {page} of 5</span>
-                    <Button variant="ghost" size="icon" onClick={() => setPage(Math.min(5, page + 1))}>
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    {/* Page navigation removed as iframe handles scrolling */}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -58,26 +52,6 @@ export function PDFViewer({ url, violations, selectedViolationId }: PDFViewerPro
                         className="absolute inset-0 w-full h-full"
                         title="Building Plan"
                     />
-
-                    {/* Violation Overlays */}
-                    {violations
-                        .filter(v => v.page === page)
-                        .map((v, index) => (
-                            <div
-                                key={v.id}
-                                className={`absolute w-8 h-8 -ml-4 -mt-4 rounded-full flex items-center justify-center cursor-pointer transition-all z-10
-                  ${selectedViolationId === v.id
-                                        ? "bg-primary text-primary-foreground scale-125 shadow-lg ring-4 ring-primary/20"
-                                        : v.severity === "critical"
-                                            ? "bg-red-500 border-2 border-white text-white shadow-md"
-                                            : "bg-yellow-500 border-2 border-white text-white shadow-md"
-                                    }`}
-                                style={{ left: v.x, top: v.y }}
-                                title={v.title}
-                            >
-                                {index + 1}
-                            </div>
-                        ))}
                 </div>
             </div>
         </div>

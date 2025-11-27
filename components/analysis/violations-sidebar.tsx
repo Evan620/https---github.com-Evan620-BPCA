@@ -102,9 +102,9 @@ export function ViolationsSidebar({ violations, onSelectViolation, selectedViola
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5">{getSeverityIcon(violation.severity)}</div>
                                 <div className="space-y-1 flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <p className="font-medium text-sm">{violation.title}</p>
-                                        <span className="text-xs text-muted-foreground">Pg {violation.page}</span>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="font-medium text-sm leading-tight">{violation.title}</p>
+                                        <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 mt-0.5">Pg {violation.page}</span>
                                     </div>
                                     <p className="text-xs text-muted-foreground line-clamp-2">
                                         {violation.description}
