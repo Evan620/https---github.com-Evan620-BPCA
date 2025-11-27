@@ -10,7 +10,7 @@ export async function getN8nWebhookUrl() {
         .from("settings")
         .select("n8n_webhook_url")
         .eq("user_id", user.id)
-        .single()
+        .maybeSingle()
 
     if (error || !data) return null
 

@@ -15,6 +15,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { Logo } from "@/components/ui/logo";
 
 const loginSchema = z.object({
     email: z.string().email("Please enter a valid email address"),
@@ -48,7 +49,8 @@ export default function LoginPage() {
 
     return (
         <Card className="w-full border-zinc-200 shadow-lg dark:border-zinc-800">
-            <CardHeader className="space-y-1">
+            <CardHeader className="space-y-1 flex flex-col items-center">
+                <Logo className="mb-4" />
                 <CardTitle className="text-2xl font-bold tracking-tight">
                     Sign in
                 </CardTitle>

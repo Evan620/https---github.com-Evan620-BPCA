@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button"
 import {
     Dialog,
     DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
     DialogFooter,
     DialogTrigger,
 } from "@/components/ui/dialog"
@@ -91,6 +94,12 @@ export function WizardDialog() {
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] min-h-[500px] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>New Analysis</DialogTitle>
+                    <DialogDescription>
+                        Upload a plan and select codes to analyze.
+                    </DialogDescription>
+                </DialogHeader>
                 <div className="flex-1 py-6">
                     {step === 1 && (
                         <StepUpload onFileSelect={handleFileSelect} selectedFile={file} />

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/ui/logo";
 
 const signupSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -63,7 +64,8 @@ export default function SignupPage() {
 
     return (
         <Card className="w-full border-zinc-200 shadow-lg dark:border-zinc-800">
-            <CardHeader className="space-y-1">
+            <CardHeader className="space-y-1 flex flex-col items-center">
+                <Logo className="mb-4" />
                 <CardTitle className="text-2xl font-bold tracking-tight">
                     Create an account
                 </CardTitle>

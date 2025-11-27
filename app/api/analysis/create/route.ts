@@ -20,7 +20,8 @@ export async function POST(request: Request) {
         return NextResponse.json(
             {
                 error: "Failed to create analysis",
-                message: error instanceof Error ? error.message : "Unknown error"
+                message: error instanceof Error ? error.message : "Unknown error",
+                details: error
             },
             { status: 500 }
         )
