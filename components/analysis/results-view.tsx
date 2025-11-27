@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Download, Share2, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { downloadComplianceReport } from "@/lib/pdf-generator"
+import { downloadComplianceReport, generateComplianceReport } from "@/lib/pdf-generator"
 
 interface Violation {
     id: string
@@ -43,10 +43,31 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
     const [projectName, setProjectName] = useState<string>("Building Plan")
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [pdfView, setPdfView] = useState<'report' | 'original'>('report')
+    const [generatedReportUrl, setGeneratedReportUrl] = useState<string | null>(null)
 
     useEffect(() => {
         loadReport()
     }, [analysisId])
+
+    // Generate PDF blob URL when report data is loaded
+    useEffect(() => {
+        if (rawJsonReport && projectName) {
+            try {
+                const doc = generateComplianceReport(rawJsonReport, projectName)
+                const pdfBlob = doc.output('blob')
+                const url = URL.createObjectURL(pdfBlob)
+                setGeneratedReportUrl(url)
+
+                // Cleanup on unmount
+                return () => {
+                    URL.revokeObjectURL(url)
+                }
+            } catch (err) {
+                console.error('Error generating PDF preview:', err)
+            }
+        }
+    }, [rawJsonReport, projectName])
 
     const loadReport = async () => {
         try {
@@ -227,11 +248,45 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                             criticalViolations={reportData.criticalViolations}
                         />
                     </div>
-                    <PDFViewer
-                        url={reportData.annotatedPdfUrl || reportData.pdfUrl || "/mock-plan.pdf"}
-                        violations={reportData.violations}
-                        selectedViolationId={selectedViolationId}
-                    />
+
+                    {/* PDF View Toggle */}
+                    <div className="absolute top-4 right-4 z-10">
+                        <div className="bg-background/95 backdrop-blur border rounded-lg p-1 flex gap-1 shadow-sm">
+                            <Button
+                                variant={pdfView === 'report' ? 'default' : 'ghost'}
+                                size="sm"
+                                onClick={() => setPdfView('report')}
+                                className="text-xs"
+                            >
+                                📄 Report View
+                            </Button>
+                            <Button
+                                variant={pdfView === 'original' ? 'default' : 'ghost'}
+                                size="sm"
+                                onClick={() => setPdfView('original')}
+                                className="text-xs"
+                            >
+                                🏗️ Original Plan
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* PDF Viewer */}
+                    {pdfView === 'report' && generatedReportUrl ? (
+                        <div className="w-full h-full bg-muted/30">
+                            <iframe
+                                src={`${generatedReportUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                                className="w-full h-full"
+                                title="Compliance Report"
+                            />
+                        </div>
+                    ) : (
+                        <PDFViewer
+                            url={reportData.annotatedPdfUrl || reportData.pdfUrl || "/mock-plan.pdf"}
+                            violations={reportData.violations}
+                            selectedViolationId={selectedViolationId}
+                        />
+                    )}
                 </div>
 
                 {/* Resizer Handle */}
