@@ -7,7 +7,7 @@ import { CheckCircle2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface LoadingScreenProps {
-    status: "uploading" | "processing" | "analyzing" | "generating" | "completed"
+    status: "uploading" | "processing" | "analyzing" | "generating" | "completed" | "failed"
 }
 
 export function LoadingScreen({ status }: LoadingScreenProps) {

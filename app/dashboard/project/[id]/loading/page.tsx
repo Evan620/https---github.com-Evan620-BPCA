@@ -14,7 +14,7 @@ export default function AnalysisLoadingPage() {
     const projectId = params.id as string
     const analysisId = searchParams.get("analysisId")
 
-    const [currentStatus, setCurrentStatus] = useState<"uploading" | "processing" | "analyzing" | "generating" | "completed">("uploading")
+    const [currentStatus, setCurrentStatus] = useState<"uploading" | "processing" | "analyzing" | "generating" | "completed" | "failed">("uploading")
 
     useEffect(() => {
         if (!analysisId) {
@@ -57,13 +57,16 @@ export default function AnalysisLoadingPage() {
 
         // Polling fallback in case Realtime doesn't work
         const pollInterval = setInterval(async () => {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('analyses')
                 .select('status')
                 .eq('id', analysisId)
                 .single()
 
+            console.log('Polling analysis status:', { analysisId, status: data?.status, error })
+
             if (data?.status === 'completed') {
+                console.log('Analysis completed! Redirecting...')
                 clearInterval(pollInterval)
                 setCurrentStatus('completed')
                 setTimeout(() => {
