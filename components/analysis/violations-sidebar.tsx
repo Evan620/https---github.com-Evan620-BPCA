@@ -103,13 +103,13 @@ export function ViolationsSidebar({ violations, onSelectViolation, selectedViola
                                 <div className="mt-0.5">{getSeverityIcon(violation.severity)}</div>
                                 <div className="space-y-1 flex-1">
                                     <div className="flex items-start justify-between gap-2">
-                                        <p className="font-medium text-sm leading-tight">{violation.title}</p>
+                                        <p className="font-medium text-sm leading-tight break-words">{violation.title}</p>
                                         <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 mt-0.5">Pg {violation.page}</span>
                                     </div>
-                                    <p className="text-xs text-muted-foreground line-clamp-2">
+                                    <p className="text-xs text-muted-foreground line-clamp-2 break-words">
                                         {violation.description}
                                     </p>
-                                    <Badge variant="outline" className="text-[10px] h-5">
+                                    <Badge variant="outline" className="text-[10px] min-h-5 h-auto whitespace-normal text-left py-1 break-words leading-tight">
                                         {violation.code}
                                     </Badge>
                                 </div>
