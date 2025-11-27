@@ -55,8 +55,33 @@ export default function AnalysisLoadingPage() {
             )
             .subscribe()
 
+        // Polling fallback in case Realtime doesn't work
+        const pollInterval = setInterval(async () => {
+            const { data } = await supabase
+                .from('analyses')
+                .select('status')
+                .eq('id', analysisId)
+                .single()
+
+            if (data?.status === 'completed') {
+                clearInterval(pollInterval)
+                setCurrentStatus('completed')
+                setTimeout(() => {
+                    router.push(`/dashboard/project/${projectId}/analysis/${analysisId}`)
+                }, 2000)
+            } else if (data?.status === 'failed') {
+                clearInterval(pollInterval)
+                setCurrentStatus('failed')
+                setTimeout(() => {
+                    alert("Analysis failed. Please try again.")
+                    router.push(`/dashboard/project/${projectId}`)
+                }, 2000)
+            }
+        }, 3000) // Poll every 3 seconds
+
         return () => {
             supabase.removeChannel(channel)
+            clearInterval(pollInterval)
         }
     }, [analysisId, projectId, router, supabase])
 
