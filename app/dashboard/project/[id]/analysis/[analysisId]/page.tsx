@@ -1,5 +1,6 @@
 import { ResultsView } from "@/components/analysis/results-view"
 
-export default function AnalysisResultsPage({ params }: { params: { analysisId: string } }) {
-    return <ResultsView analysisId={params.analysisId} />
+export default async function AnalysisResultsPage({ params }: { params: Promise<{ analysisId: string }> }) {
+    const { analysisId } = await params
+    return <ResultsView analysisId={analysisId} />
 }

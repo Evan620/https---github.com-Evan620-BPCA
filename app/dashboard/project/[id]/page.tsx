@@ -61,6 +61,7 @@ export default function ProjectPage() {
                     </div>
 
                     <AnalysisTable
+                        projectId={projectId}
                         analyses={analyses?.map(a => ({
                             ...a,
                             createdAt: new Date(a.created_at),

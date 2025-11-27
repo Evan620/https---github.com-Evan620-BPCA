@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FileText, Download, ExternalLink, CheckCircle2, AlertCircle, Clock } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { useRouter } from "next/navigation"
 
 interface Analysis {
     id: string
@@ -24,9 +25,12 @@ interface Analysis {
 
 interface AnalysisTableProps {
     analyses: Analysis[]
+    projectId: string
 }
 
-export function AnalysisTable({ analyses }: AnalysisTableProps) {
+export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
+    const router = useRouter()
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "completed":
@@ -102,10 +106,10 @@ export function AnalysisTable({ analyses }: AnalysisTableProps) {
                                 <div className="flex justify-end gap-2">
                                     {analysis.status === "completed" && (
                                         <>
-                                            <Button variant="ghost" size="icon">
+                                            <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/project/${projectId}/analysis/${analysis.id}`)}>
                                                 <Download className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon">
+                                            <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/project/${projectId}/analysis/${analysis.id}`)}>
                                                 <ExternalLink className="h-4 w-4" />
                                             </Button>
                                         </>
