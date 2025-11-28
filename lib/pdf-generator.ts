@@ -2,11 +2,17 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
 interface Violation {
-    requirement: string
-    details: string
-    status: string
-    code_reference: string
+    requirement?: string
+    details?: string
+    status?: string
+    code_reference?: string
     recommendation?: string
+    // New fields
+    severity?: string
+    regulation?: string
+    description?: string
+    reference_documents?: string[]
+    code?: string
 }
 
 interface ReportData {
@@ -55,8 +61,8 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
 
     // Violations Summary
     const allIssues = [...(reportData.violations || []), ...(reportData.warnings || [])]
-    const criticalCount = allIssues.filter(v => v.status === 'VIOLATION').length
-    const warningCount = allIssues.filter(v => v.status === 'WARNING').length
+    const criticalCount = allIssues.filter(v => v.status === 'VIOLATION' || v.severity === 'CRITICAL').length
+    const warningCount = allIssues.filter(v => v.status === 'WARNING' || v.severity === 'WARNING').length
 
     let yPos = reportData.overall_assessment?.summary ? 110 : 95
 
@@ -79,14 +85,35 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
         doc.setFont('helvetica', 'bold')
         doc.text('Detailed Findings', 20, yPos)
 
-        const tableData = allIssues.map((issue, index) => [
-            `${index + 1}`,
-            issue.status === 'VIOLATION' ? 'Critical' : 'Warning',
-            issue.requirement || 'N/A',
-            issue.code_reference || 'N/A',
-            issue.details || 'N/A',
-            issue.recommendation || 'N/A'
-        ])
+        const tableData = allIssues.map((issue, index) => {
+            // Determine severity
+            const isCritical = issue.status === 'VIOLATION' || issue.severity === 'CRITICAL';
+
+            // Determine requirement/title
+            const requirement = issue.regulation || issue.requirement || 'N/A';
+
+            // Determine code reference
+            let codeRef = issue.code_reference || '';
+            if (!codeRef && issue.reference_documents && Array.isArray(issue.reference_documents) && issue.reference_documents.length > 0) {
+                codeRef = issue.reference_documents[0];
+            }
+            if (!codeRef && issue.code) {
+                codeRef = issue.code;
+            }
+            if (!codeRef) codeRef = 'N/A';
+
+            // Determine details
+            const details = issue.description || issue.details || 'N/A';
+
+            return [
+                `${index + 1}`,
+                isCritical ? 'Critical' : 'Warning',
+                requirement,
+                codeRef,
+                details,
+                issue.recommendation || 'N/A'
+            ];
+        })
 
         autoTable(doc, {
             startY: yPos + 5,

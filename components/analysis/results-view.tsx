@@ -108,16 +108,38 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
 
             const rawViolations = [...(jsonReport.violations || []), ...(jsonReport.warnings || [])];
 
-            const violations: Violation[] = rawViolations.map((v: any, index: number) => ({
-                id: v.id || `violation-${index}`,
-                title: v.requirement || "Violation",
-                description: v.details || v.recommendation || "",
-                severity: v.status === "VIOLATION" ? "critical" : "warning",
-                code: v.code_reference || "",
-                page: v.page || 1,
-                x: v.x || "50%", // Default to center if no coordinates
-                y: v.y || "50%"
-            }))
+            const violations: Violation[] = rawViolations.map((v: any, index: number) => {
+                // Determine severity
+                let severity: "critical" | "warning" | "info" = "warning";
+                if (v.severity === "CRITICAL" || v.status === "VIOLATION") severity = "critical";
+                else if (v.severity === "WARNING" || v.status === "WARNING") severity = "warning";
+
+                // Determine title/requirement
+                const title = v.regulation || v.requirement || "Violation";
+
+                // Determine description/details
+                const description = v.description || v.details || v.recommendation || "";
+
+                // Determine code reference
+                let code = v.code_reference || "";
+                if (!code && v.reference_documents && Array.isArray(v.reference_documents) && v.reference_documents.length > 0) {
+                    code = v.reference_documents[0];
+                }
+                if (!code && v.code) {
+                    code = v.code;
+                }
+
+                return {
+                    id: v.id || `violation-${index}`,
+                    title,
+                    description,
+                    severity,
+                    code,
+                    page: v.page || 1,
+                    x: v.x || "50%",
+                    y: v.y || "50%"
+                };
+            })
 
             const criticalCount = violations.filter(v => v.severity === "critical").length
 
