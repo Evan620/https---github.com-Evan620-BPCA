@@ -20,7 +20,7 @@ Conduct a rigorous line-by-line compliance assessment of the provided building d
 
 ---
 
-### 🧠 STEP 2: APPLY SMART COMPLIANCE LOGIC (Interpretation Guide)
+🧠 STEP 2: APPLY SMART COMPLIANCE LOGIC (Interpretation Guide)
 *Use these rules to interpret the fetched regulations correctly. You must CROSS-REFERENCE these rules with the official text you just fetched.*
 
 **Note:** The code input might be formatted like "ibc-2021", "ncc-2022", "vic-regs", etc. Match loosely.
