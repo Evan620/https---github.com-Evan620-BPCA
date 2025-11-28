@@ -93,7 +93,7 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
 
             if (typeof value === 'object' && value !== null && 'compliant' in value) {
                 // Add ALL regulations, not just violations
-                let severity = "info"; // Default for compliant items
+                let severity = "COMPLIANT"; // Default for compliant items
                 let status = "COMPLIANT";
 
                 if (value.compliant === false) {
@@ -108,8 +108,12 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
                         status = "WARNING";
                     }
                 } else if (value.compliant === null) {
-                    severity = "WARNING";
+                    severity = "INSUFFICIENT_DATA";
                     status = "INSUFFICIENT_DATA";
+                } else if (value.compliant === true) {
+                    // Explicitly set for compliant items
+                    severity = "COMPLIANT";
+                    status = "COMPLIANT";
                 }
 
                 allIssues.push({
