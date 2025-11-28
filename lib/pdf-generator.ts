@@ -1,29 +1,6 @@
 import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-
-interface Violation {
-    requirement?: string
-    details?: string
-    status?: string
-    code_reference?: string
-    recommendation?: string
-    // New fields
-    severity?: string
-    regulation?: string
-    description?: string
-    reference_documents?: string[]
-    code?: string
-    compliant?: boolean | null // Track compliance status
-}
 
 interface ReportData {
-    overall_assessment?: {
-        compliance_score: number
-        summary: string
-    }
-    violations?: Violation[]
-    warnings?: Violation[]
-    // Support for flat structure
     summary?: {
         overall_compliance?: boolean
         non_compliant_clauses?: string[]
@@ -34,111 +11,75 @@ interface ReportData {
 
 export function generateComplianceReport(reportData: ReportData, projectName: string = "Building Plan"): jsPDF {
     const doc = new jsPDF()
+    let yPos = 20
 
     // Header
     doc.setFontSize(20)
     doc.setFont('helvetica', 'bold')
-    doc.text('Building Plan Compliance Report', 105, 20, { align: 'center' })
+    doc.text('Building Plan Compliance Report', 105, yPos, { align: 'center' })
+    yPos += 8
 
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Project: ${projectName}`, 105, 28, { align: 'center' })
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 34, { align: 'center' })
+    doc.text(`Project: ${projectName}`, 105, yPos, { align: 'center' })
+    yPos += 6
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, yPos, { align: 'center' })
+    yPos += 15
 
-    // Parse Report Data (Handle both nested and flat structures)
-    let allIssues: Violation[] = [];
+    // Parse Report Data
     let complianceScore = 0;
     let summaryText = "";
+    const regulations: any[] = [];
 
-    // 1. Try to extract from nested structure (legacy/original format)
-    if (reportData.violations || reportData.warnings) {
-        allIssues = [...(reportData.violations || []), ...(reportData.warnings || [])];
-        complianceScore = reportData.overall_assessment?.compliance_score || 0;
-        summaryText = reportData.overall_assessment?.summary || "";
-    }
-    // 2. Try to extract from flat structure (new AI format)
-    else {
-        // Extract score from summary if available
-        if (reportData.summary && typeof (reportData as any).summary.compliance_score === 'number') {
-            complianceScore = (reportData as any).summary.compliance_score;
-        } else {
-            // Calculate score based on compliant vs total items
-            let totalItems = 0;
-            let compliantItems = 0;
+    // Extract compliance score
+    if (reportData.summary && typeof reportData.summary.compliance_score === 'number') {
+        complianceScore = reportData.summary.compliance_score;
+    } else {
+        // Calculate score
+        let totalItems = 0;
+        let compliantItems = 0;
 
-            Object.entries(reportData).forEach(([key, value]: [string, any]) => {
-                if (key === 'summary' || key === 'disclaimer') return;
-                if (typeof value === 'object' && value !== null) {
-                    totalItems++;
-                    if (value.compliant === true) compliantItems++;
-                }
-            });
-
-            complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 0;
-        }
-
-        // Extract summary text
-        if ((reportData as any).summary && (reportData as any).summary.overall_compliance !== undefined) {
-            const isCompliant = (reportData as any).summary.overall_compliance;
-            const nonCompliantList = (reportData as any).summary.non_compliant_clauses || [];
-            summaryText = `Overall Compliance: ${isCompliant ? 'YES' : 'NO'}. \n`;
-            if (nonCompliantList.length > 0) {
-                summaryText += `Non-compliant clauses: ${nonCompliantList.join(', ')}`;
-            }
-        }
-
-        // Iterate over keys to find ALL regulations (compliant and non-compliant)
         Object.entries(reportData).forEach(([key, value]: [string, any]) => {
             if (key === 'summary' || key === 'disclaimer') return;
-
             if (typeof value === 'object' && value !== null && 'compliant' in value) {
-                // Add ALL regulations, not just violations
-                let severity = "COMPLIANT"; // Default for compliant items
-                let status = "COMPLIANT";
-
-                if (value.compliant === false) {
-                    if (value.severity === "CRITICAL" || value.severity === "High") {
-                        severity = "CRITICAL";
-                        status = "VIOLATION";
-                    } else if (value.severity === "Medium") {
-                        severity = "WARNING";
-                        status = "WARNING";
-                    } else {
-                        severity = "WARNING";
-                        status = "WARNING";
-                    }
-                } else if (value.compliant === null) {
-                    severity = "INSUFFICIENT_DATA";
-                    status = "INSUFFICIENT_DATA";
-                } else if (value.compliant === true) {
-                    // Explicitly set for compliant items
-                    severity = "COMPLIANT";
-                    status = "COMPLIANT";
-                }
-
-                allIssues.push({
-                    requirement: key, // Use key as requirement title
-                    description: value.comment || value.description || "No details provided",
-                    status: status,
-                    severity: severity,
-                    code_reference: key,
-                    recommendation: value.recommendation || (value.compliant === true ? "Compliant" : "Review compliance requirements"),
-                    compliant: value.compliant // Store compliance status
-                });
+                totalItems++;
+                if (value.compliant === true) compliantItems++;
             }
         });
+
+        complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 0;
     }
+
+    // Extract summary
+    if (reportData.summary) {
+        const isCompliant = reportData.summary.overall_compliance;
+        const nonCompliantList = reportData.summary.non_compliant_clauses || [];
+        summaryText = `Overall Compliance: ${isCompliant ? 'YES' : 'NO'}`;
+        if (nonCompliantList.length > 0) {
+            summaryText += `\nNon-compliant clauses: ${nonCompliantList.join(', ')}`;
+        }
+    }
+
+    // Collect all regulations
+    Object.entries(reportData).forEach(([key, value]: [string, any]) => {
+        if (key === 'summary' || key === 'disclaimer') return;
+        if (typeof value === 'object' && value !== null && 'compliant' in value) {
+            regulations.push({ key, ...value });
+        }
+    });
 
     // Compliance Score Section
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
-    doc.text('Compliance Score', 20, 50)
+    doc.text('Compliance Score', 20, yPos)
+    yPos += 10
 
     const score = complianceScore
     doc.setFontSize(40)
     const scoreColor = score >= 90 ? [34, 197, 94] : score >= 70 ? [234, 179, 8] : [239, 68, 68]
     doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2])
-    doc.text(`${score}%`, 20, 70)
+    doc.text(`${score}%`, 20, yPos)
+    yPos += 15
 
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(10)
@@ -146,130 +87,104 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
 
     // Summary
     if (summaryText) {
-        doc.text('Summary:', 20, 85)
         const summaryLines = doc.splitTextToSize(summaryText, 170)
-        doc.text(summaryLines, 20, 92)
+        doc.text(summaryLines, 20, yPos)
+        yPos += summaryLines.length * 5 + 10
     }
 
-    // Violations Summary - Only count NON-COMPLIANT items
-    const criticalCount = allIssues.filter(v =>
-        v.compliant === false && (v.status === 'VIOLATION' || v.severity === 'CRITICAL')
-    ).length;
-
-    const warningCount = allIssues.filter(v =>
-        v.compliant === false && (v.status === 'WARNING' || v.severity === 'WARNING' || v.severity === 'Medium' || v.severity === 'High')
-    ).length;
-
-    const insufficientDataCount = allIssues.filter(v => v.compliant === null).length;
-
-    const totalIssues = criticalCount + warningCount + insufficientDataCount;
-
-    let yPos = summaryText ? 110 : 95
-
-    doc.setFontSize(12)
+    // Regulations in text format
+    doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
-    doc.text(`Total Issues: ${totalIssues}`, 20, yPos)
+    doc.text('Detailed Findings', 20, yPos)
+    yPos += 10
+
+    doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    doc.setTextColor(239, 68, 68)
-    doc.text(`Critical: ${criticalCount}`, 20, yPos + 7)
-    doc.setTextColor(234, 179, 8)
-    doc.text(`Warnings: ${warningCount}`, 60, yPos + 7)
-    doc.setTextColor(0, 0, 0)
 
-    // Violations Table
-    if (allIssues.length > 0) {
-        yPos += 20
+    regulations.forEach((reg) => {
+        // Check if we need a new page
+        if (yPos > 270) {
+            doc.addPage()
+            yPos = 20
+        }
 
-        doc.setFontSize(14)
+        // Regulation header
         doc.setFont('helvetica', 'bold')
-        doc.text('Detailed Findings', 20, yPos)
+        doc.text(`=== ${reg.key} ===`, 20, yPos)
+        yPos += 5
 
-        const tableData = allIssues.map((issue, index) => {
-            // Determine severity display text
-            let severityText = 'Warning'; // Default
+        doc.setFont('helvetica', 'normal')
 
-            if (issue.compliant === true) {
-                severityText = 'Compliant';
-            } else if (issue.compliant === false) {
-                if (issue.status === 'VIOLATION' || issue.severity === 'CRITICAL') {
-                    severityText = 'Critical';
-                } else {
-                    severityText = 'Warning';
-                }
-            } else if (issue.compliant === null) {
-                severityText = 'Insufficient Data';
+        // Compliant status
+        let compliantText = 'Not assessed';
+        if (reg.compliant === true) compliantText = 'Yes';
+        else if (reg.compliant === false) compliantText = 'No';
+
+        doc.text(`Compliant: ${compliantText}`, 20, yPos)
+        yPos += 5
+
+        // Description
+        if (reg.description) {
+            const descLines = doc.splitTextToSize(`description: ${reg.description}`, 170)
+            doc.text(descLines, 20, yPos)
+            yPos += descLines.length * 4
+        }
+
+        // Required
+        if (reg.required) {
+            const reqLines = doc.splitTextToSize(`required: ${reg.required}`, 170)
+            doc.text(reqLines, 20, yPos)
+            yPos += reqLines.length * 4
+        }
+
+        // Proposed
+        if (reg.proposed) {
+            const propText = typeof reg.proposed === 'object' ? JSON.stringify(reg.proposed) : reg.proposed;
+            const propLines = doc.splitTextToSize(`proposed: ${propText}`, 170)
+            doc.text(propLines, 20, yPos)
+            yPos += propLines.length * 4
+        }
+
+        // Additional measurements (if any)
+        const excludeKeys = ['compliant', 'description', 'required', 'proposed', 'comment', 'severity', 'recommendation', 'key'];
+        Object.entries(reg).forEach(([key, value]) => {
+            if (!excludeKeys.includes(key) && value !== null && value !== undefined) {
+                const valueText = typeof value === 'object' ? JSON.stringify(value) : String(value);
+                const lines = doc.splitTextToSize(`${key}: ${valueText}`, 170)
+                doc.text(lines, 20, yPos)
+                yPos += lines.length * 4
             }
+        });
 
-            // Determine requirement/title
-            const requirement = issue.requirement || issue.regulation || 'N/A';
+        // Comment
+        if (reg.comment) {
+            const commentLines = doc.splitTextToSize(`comment: ${reg.comment}`, 170)
+            doc.text(commentLines, 20, yPos)
+            yPos += commentLines.length * 4
+        }
 
-            // Determine code reference
-            let codeRef = issue.code_reference || '';
-            if (!codeRef && issue.reference_documents && Array.isArray(issue.reference_documents) && issue.reference_documents.length > 0) {
-                codeRef = issue.reference_documents[0];
-            }
-            if (!codeRef && issue.code) {
-                codeRef = issue.code;
-            }
-            if (!codeRef) codeRef = 'N/A';
+        // Recommendation (if non-compliant)
+        if (reg.recommendation && reg.compliant !== true) {
+            const recLines = doc.splitTextToSize(`recommendation: ${reg.recommendation}`, 170)
+            doc.text(recLines, 20, yPos)
+            yPos += recLines.length * 4
+        }
 
-            // Determine details
-            const details = issue.description || issue.details || 'N/A';
+        yPos += 5 // Space between regulations
+    });
 
-            return [
-                `${index + 1}`,
-                severityText,
-                requirement,
-                codeRef,
-                details,
-                issue.recommendation || 'N/A'
-            ];
-        })
-
-        autoTable(doc, {
-            startY: yPos + 5,
-            head: [['#', 'Severity', 'Requirement', 'Code Reference', 'Details', 'Recommendation']],
-            body: tableData,
-            theme: 'striped',
-            headStyles: {
-                fillColor: [59, 130, 246],
-                textColor: 255,
-                fontStyle: 'bold'
-            },
-            columnStyles: {
-                0: { cellWidth: 10 },
-                1: { cellWidth: 20 },
-                2: { cellWidth: 35 },
-                3: { cellWidth: 30 },
-                4: { cellWidth: 45 },
-                5: { cellWidth: 45 }
-            },
-            styles: {
-                fontSize: 8,
-                cellPadding: 3,
-                overflow: 'linebreak',
-                cellWidth: 'wrap'
-            },
-            didParseCell: function (data) {
-                if (data.column.index === 1 && data.section === 'body') {
-                    if (data.cell.raw === 'Critical') {
-                        data.cell.styles.textColor = [239, 68, 68]
-                        data.cell.styles.fontStyle = 'bold'
-                    } else if (data.cell.raw === 'Warning') {
-                        data.cell.styles.textColor = [234, 179, 8]
-                        data.cell.styles.fontStyle = 'bold'
-                    } else if (data.cell.raw === 'Compliant') {
-                        data.cell.styles.textColor = [34, 197, 94] // Green
-                        data.cell.styles.fontStyle = 'bold'
-                    } else if (data.cell.raw === 'Insufficient Data') {
-                        data.cell.styles.textColor = [156, 163, 175] // Gray
-                        data.cell.styles.fontStyle = 'italic'
-                    }
-                }
-            }
-        })
+    // Disclaimer
+    if (yPos > 250) {
+        doc.addPage()
+        yPos = 20
     }
+
+    yPos += 10
+    const disclaimer = "This report is generated by an automated tool and is intended for preliminary compliance review only. It does not replace the professional judgement of a registered building surveyor.";
+    const disclaimerLines = doc.splitTextToSize(disclaimer, 170)
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(8)
+    doc.text(disclaimerLines, 20, yPos)
 
     // Footer on all pages
     const pageCount = doc.getNumberOfPages()
@@ -277,6 +192,7 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
         doc.setPage(i)
         doc.setFontSize(8)
         doc.setTextColor(128, 128, 128)
+        doc.setFont('helvetica', 'normal')
         doc.text(
             `Page ${i} of ${pageCount}`,
             doc.internal.pageSize.getWidth() / 2,
