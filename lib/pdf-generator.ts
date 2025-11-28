@@ -13,6 +13,7 @@ interface Violation {
     description?: string
     reference_documents?: string[]
     code?: string
+    compliant?: boolean | null // Track compliance status
 }
 
 interface ReportData {
@@ -86,26 +87,40 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
             }
         }
 
-        // Iterate over keys to find violations
+        // Iterate over keys to find ALL regulations (compliant and non-compliant)
         Object.entries(reportData).forEach(([key, value]: [string, any]) => {
             if (key === 'summary' || key === 'disclaimer') return;
 
             if (typeof value === 'object' && value !== null && 'compliant' in value) {
-                // Add if NOT compliant
-                if (value.compliant === false || value.compliant === null) {
-                    let severity = "warning";
-                    if (value.severity === "CRITICAL" || value.severity === "High") severity = "CRITICAL";
-                    else if (value.severity === "Medium") severity = "WARNING";
+                // Add ALL regulations, not just violations
+                let severity = "info"; // Default for compliant items
+                let status = "COMPLIANT";
 
-                    allIssues.push({
-                        requirement: key, // Use key as requirement title
-                        description: value.comment || value.description || "No details provided",
-                        status: severity === "CRITICAL" ? "VIOLATION" : "WARNING",
-                        severity: severity,
-                        code_reference: key,
-                        recommendation: value.recommendation || "Review compliance requirements"
-                    });
+                if (value.compliant === false) {
+                    if (value.severity === "CRITICAL" || value.severity === "High") {
+                        severity = "CRITICAL";
+                        status = "VIOLATION";
+                    } else if (value.severity === "Medium") {
+                        severity = "WARNING";
+                        status = "WARNING";
+                    } else {
+                        severity = "WARNING";
+                        status = "WARNING";
+                    }
+                } else if (value.compliant === null) {
+                    severity = "WARNING";
+                    status = "INSUFFICIENT_DATA";
                 }
+
+                allIssues.push({
+                    requirement: key, // Use key as requirement title
+                    description: value.comment || value.description || "No details provided",
+                    status: status,
+                    severity: severity,
+                    code_reference: key,
+                    recommendation: value.recommendation || (value.compliant === true ? "Compliant" : "Review compliance requirements"),
+                    compliant: value.compliant // Store compliance status
+                });
             }
         });
     }

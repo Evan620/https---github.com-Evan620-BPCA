@@ -88,6 +88,15 @@ Conduct a rigorous line-by-line compliance assessment of the provided building d
 
 Return a single JSON object. Do not wrap in markdown code blocks.
 
+**REQUIRED FIELDS FOR EACH REGULATION:**
+*   `description`: Short title of the regulation
+*   `required`: What the code requires
+*   `proposed`: What is shown on the plan
+*   `compliant`: true / false / null
+*   `comment`: Detailed explanation with measurements
+*   `severity`: "CRITICAL" / "High" / "Medium" / "Low" (for non-compliant items)
+*   `recommendation`: **REQUIRED for non-compliant items** - Specific actionable steps to achieve compliance (e.g., "Reduce riser height to 178mm or less" or "Install handrails on both sides of stairway")
+
 ```json
 {
   "summary": {
@@ -102,7 +111,8 @@ Return a single JSON object. Do not wrap in markdown code blocks.
     "front_setback": "3.2m",
     "required_minimum": "5.0m",
     "comment": "Proposed setback of 3.2m is less than the required 5.0m average of adjacent lots.",
-    "severity": "High"
+    "severity": "High",
+    "recommendation": "Increase front setback to minimum 5.0m to match the average of adjoining dwellings, or apply for a planning permit variation."
   },
   "R311.7.5.1": {
     "description": "Stair Riser Height",
@@ -120,7 +130,8 @@ Return a single JSON object. Do not wrap in markdown code blocks.
     "compliant": false,
     "overlooking_issue": true,
     "comment": "Second-story window overlooks neighboring SPOS within 9m and lacks screening.",
-    "severity": "Medium"
+    "severity": "Medium",
+    "recommendation": "Install fixed obscure glazing to a minimum height of 1.7m above finished floor level, or install external screening with a maximum of 25% transparency."
   },
   "R310.1": {
     "description": "Emergency Escape and Rescue Openings",
@@ -136,7 +147,8 @@ Return a single JSON object. Do not wrap in markdown code blocks.
     "required": "Clear light court min 1m wide",
     "proposed": "Not assessed",
     "compliant": null,
-    "comment": "Not assessed – insufficient data on adjoining window locations."
+    "comment": "Not assessed – insufficient data on adjoining window locations.",
+    "recommendation": "Provide dimensioned elevations showing light court width to enable assessment."
   }
 }
 ```
