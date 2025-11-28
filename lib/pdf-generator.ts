@@ -147,15 +147,24 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
         doc.text(summaryLines, 20, 92)
     }
 
-    // Violations Summary
-    const criticalCount = allIssues.filter(v => v.status === 'VIOLATION' || v.severity === 'CRITICAL').length
-    const warningCount = allIssues.filter(v => v.status === 'WARNING' || v.severity === 'WARNING').length
+    // Violations Summary - Only count NON-COMPLIANT items
+    const criticalCount = allIssues.filter(v =>
+        v.compliant === false && (v.status === 'VIOLATION' || v.severity === 'CRITICAL')
+    ).length;
+
+    const warningCount = allIssues.filter(v =>
+        v.compliant === false && (v.status === 'WARNING' || v.severity === 'WARNING' || v.severity === 'Medium' || v.severity === 'High')
+    ).length;
+
+    const insufficientDataCount = allIssues.filter(v => v.compliant === null).length;
+
+    const totalIssues = criticalCount + warningCount + insufficientDataCount;
 
     let yPos = summaryText ? 110 : 95
 
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
-    doc.text(`Total Issues: ${allIssues.length}`, 20, yPos)
+    doc.text(`Total Issues: ${totalIssues}`, 20, yPos)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.setTextColor(239, 68, 68)
