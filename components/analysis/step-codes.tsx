@@ -11,44 +11,38 @@ interface StepCodesProps {
 
 export function StepCodes({ selectedCodes, onCodeToggle }: StepCodesProps) {
     const codes = [
-        // United States
+        // United Kingdom
         {
-            id: "ibc-2021",
-            name: "International Building Code (IBC) 2021",
-            description: "General building safety, fire, and egress standards.",
-            region: "🇺🇸 United States"
-        },
-        {
-            id: "nfpa-101",
-            name: "NFPA 101: Life Safety Code",
-            description: "Fire protection and occupant safety standards.",
-            region: "🇺🇸 United States"
+            id: "uk-building-regs-2010",
+            name: "UK Building Regulations 2010 - Approved Documents",
+            description: "Complete merged approved documents covering all aspects of building regulations.",
+            region: "🇬🇧 United Kingdom"
         },
         // Australia
         {
-            id: "ncc-2022-vol1",
-            name: "National Construction Code (NCC) 2022 - Volume 1",
-            description: "Commercial and multi-residential building standards.",
+            id: "victorian-building-regs-2018-part5",
+            name: "Victorian Building Regulations 2018 - Part 5 (Siting)",
+            description: "Siting requirements for single dwellings, associated buildings and fences.",
             region: "🇦🇺 Australia"
         },
         {
-            id: "as-1428-1",
-            name: "Australian Standard AS 1428.1",
-            description: "Design for access and mobility (accessibility).",
+            id: "ncc-2022",
+            name: "NCC 2022 - National Construction Code (Australia)",
+            description: "National Construction Code Volume One for commercial and multi-residential buildings.",
             region: "🇦🇺 Australia"
         },
-        // United Kingdom
+        // United States
         {
-            id: "uk-part-b",
-            name: "UK Building Regulations - Part B (Fire Safety)",
-            description: "Fire safety requirements for buildings.",
-            region: "🇬🇧 United Kingdom"
+            id: "irc-2021",
+            name: "IRC 2021 - International Residential Code",
+            description: "Comprehensive residential building code for one and two-family dwellings.",
+            region: "🇺🇸 United States"
         },
         {
-            id: "uk-part-m",
-            name: "UK Building Regulations - Part M (Access)",
-            description: "Access to and use of buildings.",
-            region: "🇬🇧 United Kingdom"
+            id: "ibc-2021",
+            name: "IBC 2021 - International Building Code",
+            description: "General building safety, fire, and egress standards for all building types.",
+            region: "🇺🇸 United States"
         },
     ]
 
