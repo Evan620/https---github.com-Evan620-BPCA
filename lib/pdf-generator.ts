@@ -173,8 +173,20 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
         doc.text('Detailed Findings', 20, yPos)
 
         const tableData = allIssues.map((issue, index) => {
-            // Determine severity
-            const isCritical = issue.status === 'VIOLATION' || issue.severity === 'CRITICAL';
+            // Determine severity display text
+            let severityText = 'Warning'; // Default
+
+            if (issue.compliant === true) {
+                severityText = 'Compliant';
+            } else if (issue.compliant === false) {
+                if (issue.status === 'VIOLATION' || issue.severity === 'CRITICAL') {
+                    severityText = 'Critical';
+                } else {
+                    severityText = 'Warning';
+                }
+            } else if (issue.compliant === null) {
+                severityText = 'Insufficient Data';
+            }
 
             // Determine requirement/title
             const requirement = issue.requirement || issue.regulation || 'N/A';
@@ -194,7 +206,7 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
 
             return [
                 `${index + 1}`,
-                isCritical ? 'Critical' : 'Warning',
+                severityText,
                 requirement,
                 codeRef,
                 details,
@@ -234,6 +246,12 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
                     } else if (data.cell.raw === 'Warning') {
                         data.cell.styles.textColor = [234, 179, 8]
                         data.cell.styles.fontStyle = 'bold'
+                    } else if (data.cell.raw === 'Compliant') {
+                        data.cell.styles.textColor = [34, 197, 94] // Green
+                        data.cell.styles.fontStyle = 'bold'
+                    } else if (data.cell.raw === 'Insufficient Data') {
+                        data.cell.styles.textColor = [156, 163, 175] // Gray
+                        data.cell.styles.fontStyle = 'italic'
                     }
                 }
             }
