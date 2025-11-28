@@ -104,47 +104,70 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             setRawJsonReport(jsonReport)
 
             // Parse the report data from n8n
-            // JSON structure: { overall_assessment: { compliance_score: ... }, violations: [{ requirement: ..., details: ..., ... }] }
+            // JSON structure: { summary: {...}, "Regulation XX": {...}, "IBC XXX": {...} }
 
-            const rawViolations = [...(jsonReport.violations || []), ...(jsonReport.warnings || [])];
+            const violations: Violation[] = [];
+            let complianceScore = 0;
 
-            const violations: Violation[] = rawViolations.map((v: any, index: number) => {
-                // Determine severity
-                let severity: "critical" | "warning" | "info" = "warning";
-                if (v.severity === "CRITICAL" || v.status === "VIOLATION") severity = "critical";
-                else if (v.severity === "WARNING" || v.status === "WARNING") severity = "warning";
+            // Extract score from summary if available
+            if (jsonReport.summary && typeof jsonReport.summary.compliance_score === 'number') {
+                complianceScore = jsonReport.summary.compliance_score;
+            } else {
+                // Calculate score based on compliant vs total items
+                let totalItems = 0;
+                let compliantItems = 0;
 
-                // Determine title/requirement
-                const title = v.regulation || v.requirement || "Violation";
+                Object.entries(jsonReport).forEach(([key, value]: [string, any]) => {
+                    if (key === 'summary' || key === 'disclaimer') return;
+                    if (typeof value === 'object' && value !== null) {
+                        totalItems++;
+                        if (value.compliant === true) compliantItems++;
+                    }
+                });
 
-                // Determine description/details
-                const description = v.description || v.details || v.recommendation || "";
+                complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 0;
+            }
 
-                // Determine code reference
-                let code = v.code_reference || "";
-                if (!code && v.reference_documents && Array.isArray(v.reference_documents) && v.reference_documents.length > 0) {
-                    code = v.reference_documents[0];
+            // Iterate over all keys to find regulations/codes
+            Object.entries(jsonReport).forEach(([key, value]: [string, any], index) => {
+                // Skip summary and disclaimer
+                if (key === 'summary' || key === 'disclaimer') return;
+
+                // Check if it's a regulation object (has 'compliant' field)
+                if (typeof value === 'object' && value !== null && 'compliant' in value) {
+                    // Only add if it's NOT compliant (false or null)
+                    if (value.compliant === false || value.compliant === null) {
+
+                        // Determine severity
+                        let severity: "critical" | "warning" | "info" = "warning";
+                        if (value.severity === "CRITICAL" || value.severity === "High") severity = "critical";
+                        else if (value.severity === "Medium") severity = "warning";
+                        else if (value.severity === "Low") severity = "info";
+
+                        // Determine title
+                        const title = key; // Use the key (e.g., "IBC 1011.5.2") as the title
+
+                        // Determine description
+                        const description = value.comment || value.description || "No details provided";
+
+                        violations.push({
+                            id: `violation-${index}`,
+                            title,
+                            description,
+                            severity,
+                            code: key,
+                            page: 1, // Default to page 1 as we don't have page info in this format
+                            x: "50%",
+                            y: "50%"
+                        });
+                    }
                 }
-                if (!code && v.code) {
-                    code = v.code;
-                }
-
-                return {
-                    id: v.id || `violation-${index}`,
-                    title,
-                    description,
-                    severity,
-                    code,
-                    page: v.page || 1,
-                    x: v.x || "50%",
-                    y: v.y || "50%"
-                };
-            })
+            });
 
             const criticalCount = violations.filter(v => v.severity === "critical").length
 
             setReportData({
-                score: jsonReport.overall_assessment?.compliance_score || 0,
+                score: complianceScore,
                 violations,
                 totalViolations: violations.length,
                 criticalViolations: criticalCount,
