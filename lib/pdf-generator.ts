@@ -16,12 +16,19 @@ interface Violation {
 }
 
 interface ReportData {
-    overall_assessment: {
+    overall_assessment?: {
         compliance_score: number
         summary: string
     }
-    violations: Violation[]
+    violations?: Violation[]
     warnings?: Violation[]
+    // Support for flat structure
+    summary?: {
+        overall_compliance?: boolean
+        non_compliant_clauses?: string[]
+        compliance_score?: number
+    }
+    [key: string]: any // Allow dynamic keys for regulations
 }
 
 export function generateComplianceReport(reportData: ReportData, projectName: string = "Building Plan"): jsPDF {
@@ -37,12 +44,78 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
     doc.text(`Project: ${projectName}`, 105, 28, { align: 'center' })
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 34, { align: 'center' })
 
+    // Parse Report Data (Handle both nested and flat structures)
+    let allIssues: Violation[] = [];
+    let complianceScore = 0;
+    let summaryText = "";
+
+    // 1. Try to extract from nested structure (legacy/original format)
+    if (reportData.violations || reportData.warnings) {
+        allIssues = [...(reportData.violations || []), ...(reportData.warnings || [])];
+        complianceScore = reportData.overall_assessment?.compliance_score || 0;
+        summaryText = reportData.overall_assessment?.summary || "";
+    }
+    // 2. Try to extract from flat structure (new AI format)
+    else {
+        // Extract score from summary if available
+        if (reportData.summary && typeof (reportData as any).summary.compliance_score === 'number') {
+            complianceScore = (reportData as any).summary.compliance_score;
+        } else {
+            // Calculate score based on compliant vs total items
+            let totalItems = 0;
+            let compliantItems = 0;
+
+            Object.entries(reportData).forEach(([key, value]: [string, any]) => {
+                if (key === 'summary' || key === 'disclaimer') return;
+                if (typeof value === 'object' && value !== null) {
+                    totalItems++;
+                    if (value.compliant === true) compliantItems++;
+                }
+            });
+
+            complianceScore = totalItems > 0 ? Math.round((compliantItems / totalItems) * 100) : 0;
+        }
+
+        // Extract summary text
+        if ((reportData as any).summary && (reportData as any).summary.overall_compliance !== undefined) {
+            const isCompliant = (reportData as any).summary.overall_compliance;
+            const nonCompliantList = (reportData as any).summary.non_compliant_clauses || [];
+            summaryText = `Overall Compliance: ${isCompliant ? 'YES' : 'NO'}. \n`;
+            if (nonCompliantList.length > 0) {
+                summaryText += `Non-compliant clauses: ${nonCompliantList.join(', ')}`;
+            }
+        }
+
+        // Iterate over keys to find violations
+        Object.entries(reportData).forEach(([key, value]: [string, any]) => {
+            if (key === 'summary' || key === 'disclaimer') return;
+
+            if (typeof value === 'object' && value !== null && 'compliant' in value) {
+                // Add if NOT compliant
+                if (value.compliant === false || value.compliant === null) {
+                    let severity = "warning";
+                    if (value.severity === "CRITICAL" || value.severity === "High") severity = "CRITICAL";
+                    else if (value.severity === "Medium") severity = "WARNING";
+
+                    allIssues.push({
+                        requirement: key, // Use key as requirement title
+                        description: value.comment || value.description || "No details provided",
+                        status: severity === "CRITICAL" ? "VIOLATION" : "WARNING",
+                        severity: severity,
+                        code_reference: key,
+                        recommendation: value.recommendation || "Review compliance requirements"
+                    });
+                }
+            }
+        });
+    }
+
     // Compliance Score Section
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
     doc.text('Compliance Score', 20, 50)
 
-    const score = reportData.overall_assessment?.compliance_score || 0
+    const score = complianceScore
     doc.setFontSize(40)
     const scoreColor = score >= 90 ? [34, 197, 94] : score >= 70 ? [234, 179, 8] : [239, 68, 68]
     doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2])
@@ -53,18 +126,17 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
     doc.setFont('helvetica', 'normal')
 
     // Summary
-    if (reportData.overall_assessment?.summary) {
+    if (summaryText) {
         doc.text('Summary:', 20, 85)
-        const summaryLines = doc.splitTextToSize(reportData.overall_assessment.summary, 170)
+        const summaryLines = doc.splitTextToSize(summaryText, 170)
         doc.text(summaryLines, 20, 92)
     }
 
     // Violations Summary
-    const allIssues = [...(reportData.violations || []), ...(reportData.warnings || [])]
     const criticalCount = allIssues.filter(v => v.status === 'VIOLATION' || v.severity === 'CRITICAL').length
     const warningCount = allIssues.filter(v => v.status === 'WARNING' || v.severity === 'WARNING').length
 
-    let yPos = reportData.overall_assessment?.summary ? 110 : 95
+    let yPos = summaryText ? 110 : 95
 
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
@@ -90,7 +162,7 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
             const isCritical = issue.status === 'VIOLATION' || issue.severity === 'CRITICAL';
 
             // Determine requirement/title
-            const requirement = issue.regulation || issue.requirement || 'N/A';
+            const requirement = issue.requirement || issue.regulation || 'N/A';
 
             // Determine code reference
             let codeRef = issue.code_reference || '';
