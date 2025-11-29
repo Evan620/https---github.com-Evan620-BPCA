@@ -21,6 +21,7 @@ interface Analysis {
     createdAt: Date
     score?: number
     violations?: number
+    pdf_url?: string
 }
 
 interface AnalysisTableProps {
@@ -30,6 +31,18 @@ interface AnalysisTableProps {
 
 export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
     const router = useRouter()
+
+    const getFileName = (url?: string) => {
+        if (!url) return "Unknown Document"
+        try {
+            const decoded = decodeURIComponent(url)
+            const cleanUrl = decoded.split('?')[0]
+            return cleanUrl.split('/').pop() || "Unknown Document"
+        } catch {
+            const cleanUrl = url.split('?')[0]
+            return cleanUrl.split('/').pop() || "Unknown Document"
+        }
+    }
 
     const handleDownload = async (analysisId: string) => {
         // Trigger direct PDF download
@@ -88,7 +101,7 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Version</TableHead>
+                        <TableHead>Document Name</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -100,7 +113,9 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-2">
                                     <FileText className="h-4 w-4 text-muted-foreground" />
-                                    v{analysis.version}
+                                    <span className="truncate max-w-[300px]" title={getFileName(analysis.pdf_url)}>
+                                        {getFileName(analysis.pdf_url)}
+                                    </span>
                                 </div>
                             </TableCell>
                             <TableCell>{getStatusBadge(analysis.status)}</TableCell>

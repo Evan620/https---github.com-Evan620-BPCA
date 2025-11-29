@@ -15,6 +15,7 @@ import { getFolders } from "@/lib/api"
 import { NewFolderDialog } from "./new-folder-dialog"
 import { useFolderStore } from "@/lib/store/folder-store"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 interface FoldersPanelProps {
     className?: string
@@ -24,6 +25,7 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
     const { activeFolder, setActiveFolder } = useFolderStore()
     const queryClient = useQueryClient()
     const supabase = createClient()
+    const router = useRouter()
 
     const { data: folders } = useQuery({
         queryKey: ["folders"],
@@ -57,7 +59,15 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
     return (
         <div className={cn("flex flex-col h-full border-r bg-muted/10", className)}>
             <div className="p-4 border-b flex items-center justify-between">
-                <h2 className="font-semibold tracking-tight">Folders</h2>
+                <div
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => {
+                        setActiveFolder(null)
+                        router.push("/dashboard")
+                    }}
+                >
+                    <h2 className="font-semibold tracking-tight">Folders</h2>
+                </div>
                 <NewFolderDialog />
             </div>
 
@@ -69,7 +79,10 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
                             "w-full justify-start",
                             activeFolder === null && "bg-secondary"
                         )}
-                        onClick={() => setActiveFolder(null)}
+                        onClick={() => {
+                            setActiveFolder(null)
+                            router.push("/dashboard")
+                        }}
                     >
                         <Folder className={cn("mr-2 h-4 w-4",
                             activeFolder === null ? "text-primary" : "text-muted-foreground"
