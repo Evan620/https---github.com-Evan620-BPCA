@@ -98,6 +98,7 @@ export async function POST(request: Request) {
                         .from("user_credits")
                         .select("credits")
                         .eq("user_id", userId)
+                        .single()
 
                     if (currentCredits) {
                         await supabase
