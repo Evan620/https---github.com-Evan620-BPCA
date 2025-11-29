@@ -23,6 +23,7 @@ export function TopBar() {
     const supabase = createClient()
     const [userEmail, setUserEmail] = useState<string>("")
     const [userName, setUserName] = useState<string>("")
+    const [credits, setCredits] = useState<number | null>(null)
 
     useEffect(() => {
         loadUser()
@@ -38,6 +39,17 @@ export function TopBar() {
                 user.email?.split('@')[0] ||
                 "User"
             setUserName(name)
+
+            // Fetch user credits
+            const { data: creditsData } = await supabase
+                .from("user_credits")
+                .select("credits")
+                .eq("user_id", user.id)
+                .single()
+
+            if (creditsData) {
+                setCredits(creditsData.credits)
+            }
         }
     }
 
@@ -76,6 +88,31 @@ export function TopBar() {
             </div>
 
             <div className="flex items-center gap-4">
+                {credits !== null && (
+                    <div className="hidden md:flex items-center gap-2 mr-2">
+                        <div
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${credits < 25
+                                    ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                    : "bg-primary/10 text-primary border-primary/20"
+                                }`}
+                            onClick={() => router.push("/dashboard/upgrade")}
+                        >
+                            <span className="text-lg">⚡</span>
+                            <span>{credits} credits</span>
+                        </div>
+                        {credits < 25 && (
+                            <Button
+                                size="sm"
+                                variant="default"
+                                className="h-7 text-xs"
+                                onClick={() => router.push("/dashboard/upgrade")}
+                            >
+                                Upgrade
+                            </Button>
+                        )}
+                    </div>
+                )}
+
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
@@ -100,6 +137,10 @@ export function TopBar() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => router.push("/dashboard/upgrade")}>
+                            <span className="mr-2">⚡</span>
+                            <span>Upgrade Plan</span>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleSignOut}>
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Sign Out</span>

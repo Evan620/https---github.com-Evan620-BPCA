@@ -10,11 +10,12 @@ import {
     DialogFooter,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { StepUpload } from "./step-upload"
 import { StepCodes } from "./step-codes"
 import { StepReview } from "./step-review"
 import { Plus, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export function WizardDialog() {
     const [open, setOpen] = useState(false)
@@ -23,6 +24,29 @@ export function WizardDialog() {
     const [fileUrl, setFileUrl] = useState<string>("")
     const [selectedCodes, setSelectedCodes] = useState<string[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const [credits, setCredits] = useState<number | null>(null)
+    const [supabase] = useState(() => createClient())
+
+    // Fetch credits when dialog opens
+    useEffect(() => {
+        if (open) {
+            fetchCredits()
+        }
+    }, [open])
+
+    const fetchCredits = async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            const { data } = await supabase
+                .from("user_credits")
+                .select("credits")
+                .eq("user_id", user.id)
+                .single()
+
+            if (data) setCredits(data.credits)
+        }
+    }
 
     const handleFileSelect = (uploadedFile: File, url: string) => {
         setFile(uploadedFile)
@@ -46,6 +70,11 @@ export function WizardDialog() {
     }
 
     const handleSubmit = async () => {
+        if (credits !== null && credits < 25) {
+            alert("Insufficient credits. Please upgrade your plan.")
+            return
+        }
+
         setIsSubmitting(true)
         try {
             if (!file || !fileUrl) {
@@ -67,13 +96,16 @@ export function WizardDialog() {
                 })
             })
 
+            const data = await response.json()
+
             if (!response.ok) {
-                const errorData = await response.json()
-                console.error("Analysis creation failed details:", errorData)
-                throw new Error(errorData.message || "Failed to create analysis")
+                if (response.status === 402) {
+                    throw new Error(data.message || "Insufficient credits")
+                }
+                throw new Error(data.message || "Failed to create analysis")
             }
 
-            const { analysisId } = await response.json()
+            const { analysisId } = data
 
             // Close modal and redirect to loading page
             setOpen(false)
@@ -99,6 +131,11 @@ export function WizardDialog() {
                     <DialogTitle>New Analysis</DialogTitle>
                     <DialogDescription>
                         Upload a plan and select codes to analyze.
+                        {credits !== null && (
+                            <span className={`block mt-1 ${credits < 25 ? "text-red-500" : "text-muted-foreground"}`}>
+                                Cost: 25 credits (Balance: {credits})
+                            </span>
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 py-6">
@@ -136,11 +173,15 @@ export function WizardDialog() {
                                 Next <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
-                            <Button onClick={handleSubmit} disabled={isSubmitting}>
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || (credits !== null && credits < 25)}
+                                className={credits !== null && credits < 25 ? "opacity-50 cursor-not-allowed" : ""}
+                            >
                                 {isSubmitting && (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 )}
-                                Start Analysis
+                                {credits !== null && credits < 25 ? "Insufficient Credits" : "Start Analysis (25 Credits)"}
                             </Button>
                         )}
                     </div>

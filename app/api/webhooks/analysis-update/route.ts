@@ -77,6 +77,47 @@ export async function POST(request: Request) {
         }
         console.log('Analysis status updated successfully')
 
+        // Refund credits if analysis failed
+        if (status === "failed") {
+            console.log('Analysis failed, refunding credits')
+            try {
+                // Get the analysis to find the user
+                const { data: analysisData } = await supabase
+                    .from("analyses")
+                    .select("project_versions(projects(user_id))")
+                    .eq("id", analysisId)
+                    .single()
+
+                const analysis = analysisData as any
+
+                if (analysis?.project_versions?.projects?.user_id) {
+                    const userId = analysis.project_versions.projects.user_id
+
+                    // Refund 25 credits
+                    const { data: currentCredits } = await supabase
+                        .from("user_credits")
+                        .select("credits")
+                        .eq("user_id", userId)
+
+                    if (currentCredits) {
+                        await supabase
+                            .from("user_credits")
+                            .update({
+                                credits: currentCredits.credits + 25,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq("user_id", userId)
+
+                        console.log('Credits refunded successfully')
+                    }
+                }
+            } catch (refundError) {
+                console.error('Error refunding credits:', refundError)
+                // Don't fail the webhook if refund fails
+            }
+        }
+
+
         // If completed, save the report
         if (status === "completed" && result) {
             console.log('Saving report to database')
