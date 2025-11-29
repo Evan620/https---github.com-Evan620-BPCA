@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +47,15 @@ export function AuthForm({
         defaultValues: defaultValues,
     });
 
+    const [showPassword, setShowPassword] = React.useState<Record<string, boolean>>({});
+
+    const togglePasswordVisibility = (fieldName: string) => {
+        setShowPassword(prev => ({
+            ...prev,
+            [fieldName]: !prev[fieldName]
+        }));
+    };
+
     return (
         <div className={cn("grid gap-6", className)}>
             <Form {...form}>
@@ -60,12 +69,29 @@ export function AuthForm({
                                 <FormItem>
                                     <FormLabel>{field.label}</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type={field.type}
-                                            placeholder={field.placeholder}
-                                            {...formField}
-                                            disabled={isLoading}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                type={field.type === "password" && showPassword[field.name] ? "text" : field.type}
+                                                placeholder={field.placeholder}
+                                                {...formField}
+                                                disabled={isLoading}
+                                                className={field.type === "password" ? "pr-10" : ""}
+                                            />
+                                            {field.type === "password" && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => togglePasswordVisibility(field.name)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                    disabled={isLoading}
+                                                >
+                                                    {showPassword[field.name] ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
