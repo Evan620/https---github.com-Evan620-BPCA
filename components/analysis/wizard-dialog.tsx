@@ -17,6 +17,8 @@ import { StepReview } from "./step-review"
 import { Plus, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
+import { useRouter } from "next/navigation"
+
 export function WizardDialog() {
     const [open, setOpen] = useState(false)
     const [step, setStep] = useState(1)
@@ -27,13 +29,12 @@ export function WizardDialog() {
 
     const [credits, setCredits] = useState<number | null>(null)
     const [supabase] = useState(() => createClient())
+    const router = useRouter()
 
-    // Fetch credits when dialog opens
+    // Fetch credits on mount
     useEffect(() => {
-        if (open) {
-            fetchCredits()
-        }
-    }, [open])
+        fetchCredits()
+    }, [])
 
     const fetchCredits = async () => {
         const { data: { user } } = await supabase.auth.getUser()
@@ -46,6 +47,14 @@ export function WizardDialog() {
 
             if (data) setCredits(data.credits)
         }
+    }
+
+    const handleNewAnalysis = () => {
+        if (credits !== null && credits < 25) {
+            router.push("/dashboard/upgrade")
+            return
+        }
+        setOpen(true)
     }
 
     const handleFileSelect = (uploadedFile: File, url: string) => {
@@ -71,7 +80,7 @@ export function WizardDialog() {
 
     const handleSubmit = async () => {
         if (credits !== null && credits < 25) {
-            alert("Insufficient credits. Please upgrade your plan.")
+            router.push("/dashboard/upgrade")
             return
         }
 
@@ -120,12 +129,10 @@ export function WizardDialog() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Analysis
-                </Button>
-            </DialogTrigger>
+            <Button onClick={handleNewAnalysis}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Analysis
+            </Button>
             <DialogContent className="sm:max-w-[600px] min-h-[500px] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>New Analysis</DialogTitle>
