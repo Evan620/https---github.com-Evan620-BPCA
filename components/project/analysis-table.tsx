@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { FileText, Download, ExternalLink, CheckCircle2, AlertCircle, Clock, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 interface Analysis {
     id: string
@@ -45,8 +46,33 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
     }
 
     const handleDownload = async (analysisId: string) => {
-        // Trigger direct PDF download
-        router.push(`/dashboard/project/${projectId}/analysis/${analysisId}`)
+        try {
+            const supabase = createClient()
+
+            // Fetch the analysis and its report
+            const { data: analysis, error: analysisError } = await supabase
+                .from("analyses")
+                .select("*, reports(*), project_versions(projects(name))")
+                .eq("id", analysisId)
+                .single()
+
+            if (analysisError) throw analysisError
+            if (!analysis || !analysis.reports || analysis.reports.length === 0) {
+                alert("Report not available")
+                return
+            }
+
+            const report = analysis.reports[0]
+            const jsonReport = report.json_report
+            const projectName = analysis.project_versions?.projects?.name || "Building Plan"
+
+            // Import PDF generator dynamically
+            const { downloadComplianceReport } = await import("@/lib/pdf-generator")
+            downloadComplianceReport(jsonReport, projectName)
+        } catch (error) {
+            console.error("Error downloading report:", error)
+            alert("Failed to download report")
+        }
     }
 
     const handleDelete = async (analysisId: string) => {
