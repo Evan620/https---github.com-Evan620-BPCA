@@ -12,11 +12,14 @@ Conduct a rigorous line-by-line compliance assessment of the provided building d
 *Do not rely solely on your internal knowledge. The tool output is the source of truth.*
 
 **Map the `selected_code` (lowercase) to the correct tool:**
-*   `vic-regs` / `victorian` → Call tool for **Victorian Building Regulations Part 5**
-*   `ibc-2021` / `ibc` → Call tool for **International Building Code (IBC)**
-*   `irc-2021` / `irc` → Call tool for **International Residential Code (IRC)**
-*   `ncc-2022` / `ncc` → Call tool for **NCC 2022 Vol 2**
-*   `uk-building-regs` / `uk` → Call tool for **UK Approved Documents**
+*   `uk-building-regs-2010` / `uk` → Call tool for **UK Building Regulations 2010 - Approved Documents**
+*   `victorian-building-regs-2018-part5` / `vic-regs` → Call tool for **Victorian Building Regulations 2018 - Part 5 (Siting)**
+*   `ncc-2022` → Call tool for **NCC 2022 - National Construction Code (Australia)**
+*   `irc-2021` → Call tool for **IRC 2021 - International Residential Code**
+*   `ibc-2021` → Call tool for **IBC 2021 - International Building Code**
+*   `si-02` → Call tool for **SI-02 – Building Envelopes**
+*   `si-03` → Call tool for **SI-03 – Small Second Dwellings**
+*   `bp-01` → Call tool for **When Is a Building Permit Required?**
 
 ---
 
@@ -37,7 +40,19 @@ Conduct a rigorous line-by-line compliance assessment of the provided building d
 *   **Overlooking (Reg 84):** Check for habitable room windows/SPOS within 9m.
 *   **Solar Access (Reg 82):** Check impact on neighbor's north-facing windows.
 
-#### 🇺🇸 IF CODE contains "irc" (e.g. "irc-2021")
+#### �🇺 IF CODE contains "si-02" (Building Envelopes)
+*   **Scope:** Building envelopes, setbacks, and height limits.
+*   **Key Checks:** Verify setbacks against the specific envelope requirements defined in the fetched document.
+
+#### 🇦🇺 IF CODE contains "si-03" (Small Second Dwellings)
+*   **Scope:** Small second dwellings (Class 1a) on the same lot.
+*   **Key Checks:** Max floor area (typically 60m²), siting requirements, and separation from the main dwelling.
+
+#### 🇦🇺 IF CODE contains "bp-01" (Building Permits)
+*   **Scope:** Determining if a permit is required.
+*   **Key Checks:** Check exemptions for small structures (e.g., sheds < 10m²), fences, and repair work.
+
+#### �🇺🇸 IF CODE contains "irc" (e.g. "irc-2021")
 *   **Egress (R311):**
     *   At least one exit door must be side-hinged, min 32" (813mm) clear width, 78" (1981mm) height.
     *   Hallways min 36" (914mm) width.
