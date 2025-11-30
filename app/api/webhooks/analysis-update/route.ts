@@ -42,17 +42,27 @@ export async function POST(request: Request) {
             }
         )
 
+        // Check for error in result
+        let finalStatus = status
+        let errorMessage = null
+
+        if (Array.isArray(result) && result.length === 1 && result[0].output) {
+            console.log('Detected error in analysis result')
+            finalStatus = "failed"
+            errorMessage = result[0].output
+        }
+
         // Update analysis status
-        console.log('Updating analysis status:', { analysisId, status })
+        console.log('Updating analysis status:', { analysisId, status: finalStatus })
 
         // Prepare update data
         const updateData: any = {
-            status,
+            status: finalStatus,
             updated_at: new Date().toISOString(),
         }
 
-        // If completed, extract summary data from result
-        if (status === "completed" && result) {
+        // If completed (and not failed), extract summary data from result
+        if (finalStatus === "completed" && result) {
             const score = result.overall_assessment?.compliance_score || 0
             const allIssues = [...(result.violations || []), ...(result.warnings || [])]
             const violationsCount = allIssues.length
@@ -78,7 +88,7 @@ export async function POST(request: Request) {
         console.log('Analysis status updated successfully')
 
         // Refund credits if analysis failed
-        if (status === "failed") {
+        if (finalStatus === "failed") {
             console.log('Analysis failed, refunding credits')
             try {
                 // Get the analysis to find the user
@@ -119,12 +129,17 @@ export async function POST(request: Request) {
         }
 
 
-        // If completed, save the report
-        if (status === "completed" && result) {
+        // If completed or failed with error message, save the report
+        if ((finalStatus === "completed" && result) || (finalStatus === "failed" && errorMessage)) {
             console.log('Saving report to database')
+
+            const reportData = finalStatus === "failed"
+                ? { error: errorMessage }
+                : result
+
             const { error: reportError } = await supabase.from("reports").insert({
                 analysis_id: analysisId,
-                json_report: result,
+                json_report: reportData,
             })
 
             if (reportError) {

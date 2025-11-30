@@ -15,11 +15,26 @@ export default function AnalysisLoadingPage() {
     const analysisId = searchParams.get("analysisId")
 
     const [currentStatus, setCurrentStatus] = useState<"uploading" | "processing" | "analyzing" | "generating" | "completed" | "failed">("uploading")
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
     useEffect(() => {
         if (!analysisId) {
             router.push(`/dashboard/project/${projectId}`)
             return
+        }
+
+        const fetchErrorAndFail = async () => {
+            // Fetch the report to get the error message
+            const { data: report } = await supabase
+                .from('reports')
+                .select('json_report')
+                .eq('analysis_id', analysisId)
+                .single()
+
+            if (report?.json_report?.error) {
+                setErrorMessage(report.json_report.error)
+            }
+            setCurrentStatus('failed')
         }
 
         // Subscribe to analysis status changes
@@ -33,21 +48,17 @@ export default function AnalysisLoadingPage() {
                     table: 'analyses',
                     filter: `id=eq.${analysisId}`
                 },
-                (payload) => {
+                async (payload) => {
                     const newStatus = (payload.new as any).status
-                    setCurrentStatus(newStatus)
 
                     if (newStatus === "completed") {
+                        setCurrentStatus('completed')
                         // Wait a moment to show completion, then redirect
                         setTimeout(() => {
                             router.push(`/dashboard/project/${projectId}/analysis/${analysisId}`)
                         }, 2000)
                     } else if (newStatus === "failed") {
-                        // Show error and redirect back
-                        setTimeout(() => {
-                            alert("Analysis failed. Please try again.")
-                            router.push(`/dashboard/project/${projectId}`)
-                        }, 2000)
+                        await fetchErrorAndFail()
                     } else {
                         setCurrentStatus(newStatus as any)
                     }
@@ -74,11 +85,7 @@ export default function AnalysisLoadingPage() {
                 }, 2000)
             } else if (data?.status === 'failed') {
                 clearInterval(pollInterval)
-                setCurrentStatus('failed')
-                setTimeout(() => {
-                    alert("Analysis failed. Please try again.")
-                    router.push(`/dashboard/project/${projectId}`)
-                }, 2000)
+                await fetchErrorAndFail()
             }
         }, 3000) // Poll every 3 seconds
 
@@ -88,5 +95,5 @@ export default function AnalysisLoadingPage() {
         }
     }, [analysisId, projectId, router, supabase])
 
-    return <LoadingScreen status={currentStatus} />
+    return <LoadingScreen status={currentStatus} error={errorMessage} projectId={projectId} />
 }

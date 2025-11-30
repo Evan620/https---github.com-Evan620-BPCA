@@ -1,5 +1,5 @@
 // Default n8n webhook URL - hardcoded for all users
-const DEFAULT_N8N_WEBHOOK_URL = "https://skyeluna.app.n8n.cloud/webhook/f14c12fc-9d17-4709-b799-3b8724f4c572"
+const DEFAULT_N8N_WEBHOOK_URL = "https://primary-production-dc95.up.railway.app/webhook/f14c12fc-9d17-4709-b799-3b8724f4c572"
 
 export async function triggerAnalysisWorkflow(analysisId: string, pdfUrl: string, selectedCodes: string[]) {
     const webhookUrl = DEFAULT_N8N_WEBHOOK_URL

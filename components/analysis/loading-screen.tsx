@@ -1,17 +1,20 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { Progress } from "@/components/ui/progress"
 import { BlueprintBackground } from "@/components/ui/blueprint-background"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { CheckCircle2, Loader2, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 interface LoadingScreenProps {
     status: "uploading" | "processing" | "analyzing" | "generating" | "completed" | "failed"
+    error?: string | null
+    projectId?: string
 }
 
-export function LoadingScreen({ status }: LoadingScreenProps) {
+export function LoadingScreen({ status, error, projectId }: LoadingScreenProps) {
     const [progress, setProgress] = useState(0)
+    const router = useRouter()
 
     const steps = [
         { id: "uploading", label: "Uploading Plan" },
@@ -39,6 +42,9 @@ export function LoadingScreen({ status }: LoadingScreenProps) {
             case "completed":
                 targetProgress = 100
                 break
+            case "failed":
+                targetProgress = 100
+                break
         }
 
         const timer = setInterval(() => {
@@ -52,6 +58,50 @@ export function LoadingScreen({ status }: LoadingScreenProps) {
 
         return () => clearInterval(timer)
     }, [status])
+
+    if (status === "failed") {
+        return (
+            <div className="relative h-full w-full flex flex-col items-center justify-center p-8 overflow-hidden">
+                <BlueprintBackground />
+
+                <div className="z-10 w-full max-w-md space-y-8 bg-background/95 backdrop-blur-sm p-8 rounded-xl border border-red-200 shadow-lg">
+                    <div className="text-center space-y-4">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                            <AlertCircle className="h-6 w-6 text-red-600" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold tracking-tight text-red-600">Analysis Failed</h2>
+                            <p className="text-muted-foreground">
+                                {error || "We couldn't analyze this document. It might not be a valid building plan."}
+                            </p>
+                        </div>
+
+                        <div className="pt-4 flex flex-col gap-2">
+                            <Button
+                                onClick={() => window.location.reload()}
+                                className="w-full"
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Try Again
+                            </Button>
+
+                            {projectId && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.push(`/dashboard/project/${projectId}`)}
+                                    className="w-full"
+                                >
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Back to Project
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="relative h-full w-full flex flex-col items-center justify-center p-8 overflow-hidden">
