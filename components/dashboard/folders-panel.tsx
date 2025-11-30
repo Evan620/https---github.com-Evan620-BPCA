@@ -126,6 +126,16 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
                     ))}
                 </div>
             </ScrollArea>
+
+            <div className="p-4 border-t text-xs text-muted-foreground">
+                <p className="mb-1">Need help?</p>
+                <a
+                    href="mailto:hello@buildcompliancevault.com"
+                    className="hover:text-primary transition-colors flex items-center gap-2"
+                >
+                    Contact us
+                </a>
+            </div>
         </div>
     )
 }

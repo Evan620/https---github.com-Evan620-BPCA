@@ -1,6 +1,7 @@
 "use client"
 
 import { Search, Bell, User, LogOut, Home } from "lucide-react"
+import { FeedbackDialog } from "@/components/feedback-dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/ui/logo"
@@ -92,8 +93,8 @@ export function TopBar() {
                     <div className="hidden md:flex items-center gap-2 mr-2">
                         <div
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${credits < 25
-                                    ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                                    : "bg-primary/10 text-primary border-primary/20"
+                                ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                : "bg-primary/10 text-primary border-primary/20"
                                 }`}
                             onClick={() => router.push("/dashboard/upgrade")}
                         >
@@ -112,6 +113,8 @@ export function TopBar() {
                         )}
                     </div>
                 )}
+
+                <FeedbackDialog defaultEmail={userEmail} />
 
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
