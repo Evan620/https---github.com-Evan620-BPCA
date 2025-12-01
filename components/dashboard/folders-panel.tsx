@@ -16,6 +16,8 @@ import { NewFolderDialog } from "./new-folder-dialog"
 import { useFolderStore } from "@/lib/store/folder-store"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 interface FoldersPanelProps {
     className?: string
@@ -50,9 +52,19 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
         },
     })
 
-    const handleDeleteFolder = (folderId: string) => {
-        if (confirm("Are you sure you want to delete this folder? Projects in this folder will not be deleted.")) {
-            deleteFolderMutation.mutate(folderId)
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [folderToDelete, setFolderToDelete] = useState<string | null>(null)
+
+    const handleDeleteClick = (folderId: string) => {
+        setFolderToDelete(folderId)
+        setDeleteDialogOpen(true)
+    }
+
+    const handleConfirmDelete = () => {
+        if (folderToDelete) {
+            deleteFolderMutation.mutate(folderToDelete)
+            setDeleteDialogOpen(false)
+            setFolderToDelete(null)
         }
     }
 
@@ -117,7 +129,7 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleDeleteFolder(folder.id)} className="text-destructive">
+                                    <DropdownMenuItem onClick={() => handleDeleteClick(folder.id)} className="text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -136,6 +148,17 @@ export function FoldersPanel({ className }: FoldersPanelProps) {
                     Contact us
                 </a>
             </div>
+
+            <ConfirmDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Delete Folder"
+                description="Are you sure you want to delete this folder? Projects in this folder will not be deleted."
+                confirmText="Delete"
+                variant="destructive"
+                onConfirm={handleConfirmDelete}
+                loading={deleteFolderMutation.isPending}
+            />
         </div>
     )
 }

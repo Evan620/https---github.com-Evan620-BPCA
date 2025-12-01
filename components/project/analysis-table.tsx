@@ -14,6 +14,8 @@ import { FileText, Download, ExternalLink, CheckCircle2, AlertCircle, Clock, Tra
 import { formatDistanceToNow } from "date-fns"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 interface Analysis {
     id: string
@@ -75,24 +77,38 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
         }
     }
 
-    const handleDelete = async (analysisId: string) => {
-        if (confirm("Are you sure you want to delete this analysis? This action cannot be undone.")) {
-            try {
-                const response = await fetch(`/api/analyses/${analysisId}`, {
-                    method: 'DELETE',
-                });
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [analysisToDelete, setAnalysisToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Failed to delete analysis');
-                }
+    const handleDeleteClick = (analysisId: string) => {
+        setAnalysisToDelete(analysisId)
+        setDeleteDialogOpen(true)
+    }
 
-                // Use router.refresh() for better state management
-                router.refresh();
-            } catch (error) {
-                console.error("Error deleting analysis:", error);
-                alert(error instanceof Error ? error.message : "An error occurred while deleting the analysis");
+    const handleConfirmDelete = async () => {
+        if (!analysisToDelete) return
+
+        setIsDeleting(true)
+        try {
+            const response = await fetch(`/api/analyses/${analysisToDelete}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete analysis');
             }
+
+            // Use router.refresh() for better state management
+            router.refresh();
+            setDeleteDialogOpen(false)
+            setAnalysisToDelete(null)
+        } catch (error) {
+            console.error("Error deleting analysis:", error);
+            alert(error instanceof Error ? error.message : "An error occurred while deleting the analysis");
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -174,7 +190,7 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleDelete(analysis.id)}
+                                        onClick={() => handleDeleteClick(analysis.id)}
                                         className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
                                         title="Delete Analysis"
                                     >
@@ -186,6 +202,17 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
                     ))}
                 </TableBody>
             </Table>
+
+            <ConfirmDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Delete Analysis"
+                description="Are you sure you want to delete this analysis? This action cannot be undone."
+                confirmText="Delete"
+                variant="destructive"
+                onConfirm={handleConfirmDelete}
+                loading={isDeleting}
+            />
         </div>
     )
 }

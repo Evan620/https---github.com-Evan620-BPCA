@@ -26,6 +26,8 @@ import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { updateProject, deleteProject } from "@/lib/api"
 
+import { ConfirmDialog } from "@/components/confirm-dialog"
+
 interface ProjectCardProps {
     project: {
         id: string
@@ -44,6 +46,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     const version = project.version || 1
 
     const [renameOpen, setRenameOpen] = useState(false)
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [newName, setNewName] = useState(project.name)
     const [newDescription, setNewDescription] = useState(project.description || "")
 
@@ -76,9 +79,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             setNewDescription(project.description || "")
             setRenameOpen(true)
         } else if (action === "delete") {
-            if (confirm(`Are you sure you want to delete "${project.name}"? This action cannot be undone.`)) {
-                deleteMutation.mutate()
-            }
+            setDeleteDialogOpen(true)
         }
     }
 
@@ -210,6 +211,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <ConfirmDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Delete Project"
+                description={`Are you sure you want to delete "${project.name}"? This action cannot be undone.`}
+                confirmText="Delete"
+                variant="destructive"
+                onConfirm={() => deleteMutation.mutate()}
+                loading={deleteMutation.isPending}
+            />
         </>
     )
 }
