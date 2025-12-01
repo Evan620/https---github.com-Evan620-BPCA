@@ -15,6 +15,11 @@ interface Violation {
     severity: "critical" | "warning" | "info"
     code: string
     page: number
+    required?: string
+    proposed?: string
+    recommendation?: string | Record<string, string>
+    page_assessed?: string
+    object_on_plan?: string
 }
 
 interface ViolationsSidebarProps {
@@ -41,6 +46,17 @@ export function ViolationsSidebar({ violations, onSelectViolation, selectedViola
             default: return <CheckCircle2 className="h-4 w-4 text-blue-500" />
         }
     }
+
+    const renderRecommendation = (recommendation: string | Record<string, string>) => {
+        if (typeof recommendation === 'string') {
+            return recommendation;
+        }
+        return Object.entries(recommendation).map(([key, value]) => (
+            <div key={key} className="mt-1">
+                <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span> {value}
+            </div>
+        ));
+    };
 
     return (
         <div className="flex flex-col h-full border-l bg-background">
@@ -112,6 +128,37 @@ export function ViolationsSidebar({ violations, onSelectViolation, selectedViola
                                     <Badge variant="outline" className="text-[10px] min-h-5 h-auto whitespace-normal text-left py-1 break-words leading-tight">
                                         {violation.code}
                                     </Badge>
+
+                                    {selectedViolationId === violation.id && (
+                                        <div className="mt-3 space-y-2 pt-2 border-t text-xs">
+                                            {violation.required && (
+                                                <div>
+                                                    <span className="font-semibold text-muted-foreground">Required:</span>
+                                                    <p className="mt-0.5">{violation.required}</p>
+                                                </div>
+                                            )}
+                                            {violation.proposed && (
+                                                <div>
+                                                    <span className="font-semibold text-muted-foreground">Proposed:</span>
+                                                    <p className="mt-0.5 whitespace-pre-wrap">{violation.proposed}</p>
+                                                </div>
+                                            )}
+                                            {violation.recommendation && (
+                                                <div>
+                                                    <span className="font-semibold text-muted-foreground">Recommendation:</span>
+                                                    <div className="mt-0.5 text-primary/90">
+                                                        {renderRecommendation(violation.recommendation)}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {(violation.page_assessed || violation.object_on_plan) && (
+                                                <div className="flex gap-2 pt-1 text-[10px] text-muted-foreground">
+                                                    {violation.page_assessed && <span>📍 {violation.page_assessed}</span>}
+                                                    {violation.object_on_plan && <span>🎯 {violation.object_on_plan}</span>}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

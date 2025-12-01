@@ -5,7 +5,7 @@ import { PDFViewer } from "./pdf-viewer"
 import { ViolationsSidebar } from "./violations-sidebar"
 import { ScoreCard } from "./score-card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download, Share2, Loader2 } from "lucide-react"
+import { X, Download, Share2, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { downloadComplianceReport, generateComplianceReport } from "@/lib/pdf-generator"
@@ -19,6 +19,11 @@ interface Violation {
     page: number
     x: string
     y: string
+    required?: string
+    proposed?: string
+    recommendation?: string | Record<string, string>
+    page_assessed?: string
+    object_on_plan?: string
 }
 
 interface ReportData {
@@ -41,6 +46,7 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
     const [reportData, setReportData] = useState<ReportData | null>(null)
     const [rawJsonReport, setRawJsonReport] = useState<any>(null)
     const [projectName, setProjectName] = useState<string>("Building Plan")
+    const [projectId, setProjectId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [pdfView, setPdfView] = useState<'report' | 'original'>('report')
@@ -87,9 +93,12 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                 throw new Error("Analysis not found")
             }
 
-            // Set project name
+            // Set project name and ID
             if (analysis.project_versions?.projects?.name) {
                 setProjectName(analysis.project_versions.projects.name)
+            }
+            if (analysis.project_versions?.project_id) {
+                setProjectId(analysis.project_versions.project_id)
             }
 
             // Check if report exists
@@ -150,6 +159,16 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                         // Determine description
                         const description = value.comment || value.description || "No details provided";
 
+                        // Handle proposed value which can be string or object
+                        let proposed = "";
+                        if (typeof value.proposed === 'string') {
+                            proposed = value.proposed;
+                        } else if (typeof value.proposed === 'object' && value.proposed !== null) {
+                            proposed = Object.entries(value.proposed)
+                                .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`)
+                                .join('\n');
+                        }
+
                         violations.push({
                             id: `violation-${index}`,
                             title,
@@ -158,7 +177,12 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                             code: key,
                             page: 1, // Default to page 1 as we don't have page info in this format
                             x: "50%",
-                            y: "50%"
+                            y: "50%",
+                            required: value.required,
+                            proposed: proposed,
+                            recommendation: value.recommendation,
+                            page_assessed: value.page_assessed,
+                            object_on_plan: value.object_on_plan
                         });
                     }
                 }
@@ -245,9 +269,9 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                     <div className="text-6xl">⚠️</div>
                     <h2 className="text-2xl font-bold">Error Loading Results</h2>
                     <p className="text-muted-foreground">{error}</p>
-                    <Button onClick={() => router.back()}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Go Back
+                    <Button onClick={() => projectId ? router.push(`/dashboard/project/${projectId}`) : router.push('/dashboard')}>
+                        <X className="mr-2 h-4 w-4" />
+                        Close
                     </Button>
                 </div>
             </div>
@@ -263,8 +287,8 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             {/* Header */}
             <div className="h-16 border-b flex items-center justify-between px-6 bg-background/95 backdrop-blur z-10 print:hidden">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" onClick={() => projectId ? router.push(`/dashboard/project/${projectId}`) : router.push('/dashboard')}>
+                        <X className="h-4 w-4" />
                     </Button>
                     <div>
                         <h1 className="font-semibold">Analysis Results</h1>
