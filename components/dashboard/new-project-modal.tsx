@@ -49,7 +49,7 @@ export function NewProjectModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button id="new-project-btn">
                     <Plus className="mr-2 h-4 w-4" />
                     New Project
                 </Button>

@@ -4,11 +4,14 @@ import { NewProjectModal } from "@/components/dashboard/new-project-modal"
 import { ProjectsGrid } from "@/components/dashboard/projects-grid"
 import { useRealtimeSubscription } from "@/hooks/use-realtime"
 
+import { OnboardingTour } from "@/components/dashboard/onboarding-tour"
+
 export default function DashboardPage() {
     useRealtimeSubscription()
 
     return (
         <div className="h-full flex flex-col">
+            <OnboardingTour />
             <div className="flex items-center justify-between px-6 py-4 border-b">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Projects</h1>

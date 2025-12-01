@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
+
 export function TopBar() {
     const router = useRouter()
     const pathname = usePathname()
@@ -115,6 +116,8 @@ export function TopBar() {
                     </div>
                 )}
 
+
+
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -138,6 +141,7 @@ export function TopBar() {
                             <span className="mr-2">⚡</span>
                             <span>Upgrade Plan</span>
                         </DropdownMenuItem>
+
                         <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
                             <MessageSquare className="mr-2 h-4 w-4" />
                             <span>Feedback</span>
