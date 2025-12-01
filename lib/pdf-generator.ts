@@ -126,9 +126,19 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
         let heightNeeded = 30 // Base padding + header
         const descLines = reg.description ? doc.splitTextToSize(reg.description, 160).length * 5 : 0
         const commentLines = reg.comment ? doc.splitTextToSize(reg.comment, 160).length * 5 : 0
-        const recLines = (reg.recommendation && !reg.compliant) ? doc.splitTextToSize(reg.recommendation, 160).length * 5 : 0
-        const extraLines = 20 // For other fields
-        heightNeeded += descLines + commentLines + recLines + extraLines
+
+        // Check for nested comments_by_room
+        let nestedCommentLines = 0
+        if (reg.comments_by_room && typeof reg.comments_by_room === 'object') {
+            Object.keys(reg.comments_by_room).forEach(() => {
+                nestedCommentLines += 40 // Approximate height per room
+            })
+        }
+
+        const recLines = (reg.recommendation && reg.compliant !== true) ?
+            (typeof reg.recommendation === 'string' ? doc.splitTextToSize(reg.recommendation, 160).length * 5 : 30) : 0
+        const extraLines = 30 // For other fields
+        heightNeeded += descLines + commentLines + recLines + extraLines + nestedCommentLines
 
         checkPageBreak(heightNeeded)
 
@@ -196,6 +206,24 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
             cardY += lines.length * 5
         }
 
+        // Page assessed and object on plan
+        if (reg.page_assessed) {
+            doc.setFont('helvetica', 'bold')
+            doc.text("Page:", 25, cardY)
+            doc.setFont('helvetica', 'normal')
+            doc.text(reg.page_assessed, 50, cardY)
+            cardY += 5
+        }
+
+        if (reg.object_on_plan) {
+            doc.setFont('helvetica', 'bold')
+            doc.text("Location:", 25, cardY)
+            doc.setFont('helvetica', 'normal')
+            const lines = doc.splitTextToSize(reg.object_on_plan, 130)
+            doc.text(lines, 50, cardY)
+            cardY += lines.length * 5
+        }
+
         if (reg.comment) {
             doc.setFont('helvetica', 'bold')
             doc.text("Analysis:", 25, cardY)
@@ -205,14 +233,61 @@ export function generateComplianceReport(reportData: ReportData, projectName: st
             cardY += lines.length * 5
         }
 
-        if (reg.recommendation && reg.compliant === false) {
+        // Handle nested comments_by_room
+        if (reg.comments_by_room && typeof reg.comments_by_room === 'object') {
             doc.setFont('helvetica', 'bold')
-            doc.setTextColor(colors.danger[0], colors.danger[1], colors.danger[2])
-            doc.text("Action Required:", 25, cardY)
+            doc.text("Room Details:", 25, cardY)
+            cardY += 5
+
+            Object.entries(reg.comments_by_room).forEach(([room, details]: [string, any]) => {
+                doc.setFont('helvetica', 'bold')
+                doc.setFontSize(8)
+                doc.text(`• ${room}:`, 30, cardY)
+                cardY += 4
+
+                doc.setFont('helvetica', 'normal')
+                if (details.comment) {
+                    const lines = doc.splitTextToSize(details.comment, 125)
+                    doc.text(lines, 35, cardY)
+                    cardY += lines.length * 4
+                }
+
+                if (details.compliance_status) {
+                    doc.text(`Status: ${details.compliance_status}`, 35, cardY)
+                    cardY += 4
+                }
+                cardY += 2
+            })
+
+            doc.setFontSize(9)
+            cardY += 3
+        }
+
+        // Show recommendation for non-compliant OR null items
+        if (reg.recommendation && reg.compliant !== true) {
+            doc.setFont('helvetica', 'bold')
+            doc.setTextColor(reg.compliant === false ? colors.danger[0] : colors.warning[0],
+                reg.compliant === false ? colors.danger[1] : colors.warning[1],
+                reg.compliant === false ? colors.danger[2] : colors.warning[2])
+            doc.text(reg.compliant === false ? "Action Required:" : "Recommendation:", 25, cardY)
             doc.setFont('helvetica', 'normal')
-            const lines = doc.splitTextToSize(reg.recommendation, 130)
-            doc.text(lines, 55, cardY)
-            cardY += lines.length * 5
+
+            if (typeof reg.recommendation === 'string') {
+                const lines = doc.splitTextToSize(reg.recommendation, 130)
+                doc.text(lines, 55, cardY)
+                cardY += lines.length * 5
+            } else if (typeof reg.recommendation === 'object') {
+                cardY += 3
+                Object.entries(reg.recommendation).forEach(([key, value]: [string, any]) => {
+                    const label = key.replace(/_/g, ' ')
+                    doc.setFont('helvetica', 'bold')
+                    doc.text(`${label}:`, 30, cardY)
+                    doc.setFont('helvetica', 'normal')
+                    const lines = doc.splitTextToSize(String(value), 120)
+                    doc.text(lines, 35, cardY + 4)
+                    cardY += 4 + lines.length * 4
+                })
+            }
         }
 
         yPos += heightNeeded + 5
