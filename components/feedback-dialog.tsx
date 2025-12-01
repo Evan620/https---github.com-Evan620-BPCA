@@ -9,26 +9,31 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MessageSquare, Star } from "lucide-react"
+import { Star } from "lucide-react"
 import { submitFeedback } from "@/lib/actions/feedback"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 interface FeedbackDialogProps {
     defaultEmail?: string
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
 }
 
-export function FeedbackDialog({ defaultEmail = "" }: FeedbackDialogProps) {
-    const [open, setOpen] = useState(false)
+export function FeedbackDialog({ defaultEmail = "", open: controlledOpen, onOpenChange }: FeedbackDialogProps) {
+    const [internalOpen, setInternalOpen] = useState(false)
     const [rating, setRating] = useState(0)
     const [message, setMessage] = useState("")
     const [email, setEmail] = useState(defaultEmail)
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    // Use controlled state if provided, otherwise use internal state
+    const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+    const setOpen = onOpenChange || setInternalOpen
 
     useEffect(() => {
         if (defaultEmail) {
@@ -63,11 +68,6 @@ export function FeedbackDialog({ defaultEmail = "" }: FeedbackDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                    <MessageSquare className="h-5 w-5" />
-                </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Send Feedback</DialogTitle>

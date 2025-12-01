@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Bell, User, LogOut, Home } from "lucide-react"
+import { Search, User, LogOut, Home, MessageSquare, Mail } from "lucide-react"
 import { FeedbackDialog } from "@/components/feedback-dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ export function TopBar() {
     const [userEmail, setUserEmail] = useState<string>("")
     const [userName, setUserName] = useState<string>("")
     const [credits, setCredits] = useState<number | null>(null)
+    const [feedbackOpen, setFeedbackOpen] = useState(false)
 
     useEffect(() => {
         loadUser()
@@ -114,13 +115,6 @@ export function TopBar() {
                     </div>
                 )}
 
-                <FeedbackDialog defaultEmail={userEmail} />
-
-                <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
-                </Button>
-
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -144,12 +138,26 @@ export function TopBar() {
                             <span className="mr-2">⚡</span>
                             <span>Upgrade Plan</span>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            <span>Feedback</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.location.href = 'mailto:hello@buildcompliancevault.com'}>
+                            <Mail className="mr-2 h-4 w-4" />
+                            <span>Contact / Request Feature</span>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleSignOut}>
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>Sign Out</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+
+                <FeedbackDialog
+                    defaultEmail={userEmail}
+                    open={feedbackOpen}
+                    onOpenChange={setFeedbackOpen}
+                />
             </div>
         </div>
     )
