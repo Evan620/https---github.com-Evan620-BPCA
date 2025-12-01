@@ -81,14 +81,17 @@ export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
                 const response = await fetch(`/api/analyses/${analysisId}`, {
                     method: 'DELETE',
                 });
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert("Failed to delete analysis");
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to delete analysis');
                 }
+
+                // Use router.refresh() for better state management
+                router.refresh();
             } catch (error) {
                 console.error("Error deleting analysis:", error);
-                alert("An error occurred while deleting the analysis");
+                alert(error instanceof Error ? error.message : "An error occurred while deleting the analysis");
             }
         }
     }
