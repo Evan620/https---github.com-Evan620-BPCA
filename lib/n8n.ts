@@ -1,7 +1,13 @@
 // Default n8n webhook URL - hardcoded for all users
 const DEFAULT_N8N_WEBHOOK_URL = "https://primary-production-dc95.up.railway.app/webhook/f14c12fc-9d17-4709-b799-3b8724f4c572"
 
-export async function triggerAnalysisWorkflow(analysisId: string, pdfUrl: string, selectedCodes: string[]) {
+export async function triggerAnalysisWorkflow(
+    analysisId: string,
+    pdfUrl: string,
+    selectedCodes: string[],
+    description?: string,
+    pageNumbers?: string
+) {
     const webhookUrl = DEFAULT_N8N_WEBHOOK_URL
 
     try {
@@ -14,6 +20,8 @@ export async function triggerAnalysisWorkflow(analysisId: string, pdfUrl: string
                 analysisId,
                 pdfUrl,
                 selectedCodes,
+                description,
+                pageNumbers,
                 // Prioritize NEXT_PUBLIC_APP_URL, then VERCEL_URL, then localhost
                 callbackUrl: (() => {
                     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||

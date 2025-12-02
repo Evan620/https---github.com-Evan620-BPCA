@@ -5,7 +5,7 @@ import { hasEnoughCredits, deductCredits, ANALYSIS_COST } from "@/lib/credits"
 
 export async function POST(request: Request) {
     try {
-        const { projectId, fileUrl, selectedCodes } = await request.json()
+        const { projectId, fileUrl, selectedCodes, description, pageNumbers } = await request.json()
 
         if (!projectId || !fileUrl || !selectedCodes) {
             return NextResponse.json(
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const analysis = await createAnalysis(projectId, fileUrl, selectedCodes)
+        const analysis = await createAnalysis(projectId, fileUrl, selectedCodes, description, pageNumbers)
 
         return NextResponse.json({
             analysisId: analysis.id,

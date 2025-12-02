@@ -6,9 +6,11 @@ import { FileText, Check, AlertTriangle } from "lucide-react"
 interface StepReviewProps {
     file: File
     selectedCodes: string[]
+    description?: string
+    pageNumbers?: string
 }
 
-export function StepReview({ file, selectedCodes }: StepReviewProps) {
+export function StepReview({ file, selectedCodes, description, pageNumbers }: StepReviewProps) {
     return (
         <div className="space-y-6">
             <div className="text-center space-y-2">
@@ -49,6 +51,24 @@ export function StepReview({ file, selectedCodes }: StepReviewProps) {
                         ))}
                     </ul>
                 </div>
+
+                {description && (
+                    <div className="bg-muted/10 p-4 rounded-lg border space-y-3">
+                        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                            Description
+                        </h4>
+                        <p className="text-sm whitespace-pre-wrap">{description}</p>
+                    </div>
+                )}
+
+                {pageNumbers && (
+                    <div className="bg-muted/10 p-4 rounded-lg border space-y-3">
+                        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                            Page Numbers
+                        </h4>
+                        <p className="text-sm font-mono">{pageNumbers}</p>
+                    </div>
+                )}
 
                 <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-lg flex gap-3 items-start">
                     <AlertTriangle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />

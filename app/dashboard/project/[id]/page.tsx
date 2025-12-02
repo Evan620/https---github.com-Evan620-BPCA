@@ -6,15 +6,27 @@ import { WizardDialog } from "@/components/analysis/wizard-dialog"
 import { useQuery } from "@tanstack/react-query"
 import { getProject, getProjectAnalyses } from "@/lib/api"
 import { Loader2 } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 
 import { useRealtimeSubscription } from "@/hooks/use-realtime"
 
 export default function ProjectPage() {
     const params = useParams()
+    const searchParams = useSearchParams()
     const projectId = params.id as string
+    const [wizardOpen, setWizardOpen] = useState(false)
 
     useRealtimeSubscription(projectId)
+
+    // Check if we should auto-open the wizard
+    useEffect(() => {
+        if (searchParams.get("newAnalysis") === "true") {
+            setWizardOpen(true)
+            // Clean up the URL
+            window.history.replaceState({}, "", `/dashboard/project/${projectId}`)
+        }
+    }, [searchParams, projectId])
 
     const { data: project, isLoading: isProjectLoading } = useQuery({
         queryKey: ["project", projectId],
@@ -57,7 +69,7 @@ export default function ProjectPage() {
                 <div className="mt-8 space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold tracking-tight">Analysis History</h2>
-                        <WizardDialog />
+                        <WizardDialog open={wizardOpen} onOpenChange={setWizardOpen} />
                     </div>
 
                     <AnalysisTable

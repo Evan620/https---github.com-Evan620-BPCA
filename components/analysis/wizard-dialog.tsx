@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { useState, useEffect } from "react"
 import { StepUpload } from "./step-upload"
+import { StepDetails } from "./step-details"
 import { StepCodes } from "./step-codes"
 import { StepReview } from "./step-review"
 import { Plus, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
@@ -19,11 +20,19 @@ import { createClient } from "@/lib/supabase/client"
 
 import { useRouter } from "next/navigation"
 
-export function WizardDialog() {
-    const [open, setOpen] = useState(false)
+export interface WizardDialogProps {
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
+}
+
+export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialogProps = {}) {
+    const [internalOpen, setInternalOpen] = useState(false)
+
     const [step, setStep] = useState(1)
     const [file, setFile] = useState<File>()
     const [fileUrl, setFileUrl] = useState<string>("")
+    const [description, setDescription] = useState<string>("")
+    const [pageNumbers, setPageNumbers] = useState<string>("")
     const [selectedCodes, setSelectedCodes] = useState<string[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -35,6 +44,16 @@ export function WizardDialog() {
     useEffect(() => {
         fetchCredits()
     }, [])
+
+    // Use controlled open state if provided, otherwise use internal state
+    const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+    const setOpen = (value: boolean) => {
+        if (onOpenChange) {
+            onOpenChange(value)
+        } else {
+            setInternalOpen(value)
+        }
+    }
 
     const fetchCredits = async () => {
         const { data: { user } } = await supabase.auth.getUser()
@@ -63,7 +82,7 @@ export function WizardDialog() {
     }
 
     const handleNext = () => {
-        if (step < 3) setStep(step + 1)
+        if (step < 4) setStep(step + 1)
     }
 
     const handleBack = () => {
@@ -101,7 +120,9 @@ export function WizardDialog() {
                 body: JSON.stringify({
                     projectId,
                     fileUrl,
-                    selectedCodes
+                    selectedCodes,
+                    description: description || undefined,
+                    pageNumbers: pageNumbers || undefined
                 })
             })
 
@@ -150,13 +171,26 @@ export function WizardDialog() {
                         <StepUpload onFileSelect={handleFileSelect} selectedFile={file} />
                     )}
                     {step === 2 && (
+                        <StepDetails
+                            description={description}
+                            pageNumbers={pageNumbers}
+                            onDescriptionChange={setDescription}
+                            onPageNumbersChange={setPageNumbers}
+                        />
+                    )}
+                    {step === 3 && (
                         <StepCodes
                             selectedCodes={selectedCodes}
                             onCodeToggle={handleCodeToggle}
                         />
                     )}
-                    {step === 3 && file && (
-                        <StepReview file={file} selectedCodes={selectedCodes} />
+                    {step === 4 && file && (
+                        <StepReview
+                            file={file}
+                            selectedCodes={selectedCodes}
+                            description={description}
+                            pageNumbers={pageNumbers}
+                        />
                     )}
                 </div>
 
@@ -169,12 +203,12 @@ export function WizardDialog() {
                         )}
                     </div>
                     <div className="flex gap-2">
-                        {step < 3 ? (
+                        {step < 4 ? (
                             <Button
                                 onClick={handleNext}
                                 disabled={
                                     (step === 1 && !file) ||
-                                    (step === 2 && selectedCodes.length === 0)
+                                    (step === 3 && selectedCodes.length === 0)
                                 }
                             >
                                 Next <ArrowRight className="ml-2 h-4 w-4" />

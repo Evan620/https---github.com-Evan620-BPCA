@@ -73,13 +73,13 @@ export function LoadingScreen({ status, error, projectId }: LoadingScreenProps) 
                         <div className="space-y-2">
                             <h2 className="text-2xl font-bold tracking-tight text-red-600">Analysis Failed</h2>
                             <p className="text-muted-foreground">
-                                {error || "We couldn't analyze this document. It might not be a valid building plan."}
+                                Analysis failed. Please try again with a different file or check your building plan.
                             </p>
                         </div>
 
                         <div className="pt-4 flex flex-col gap-2">
                             <Button
-                                onClick={() => window.location.reload()}
+                                onClick={() => router.push(`/dashboard/project/${projectId}?newAnalysis=true`)}
                                 className="w-full"
                             >
                                 <RefreshCw className="mr-2 h-4 w-4" />
