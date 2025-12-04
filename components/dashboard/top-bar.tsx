@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { ANALYSIS_COST } from "@/lib/constants"
 
 
 export function TopBar() {
@@ -94,7 +95,7 @@ export function TopBar() {
                 {credits !== null && (
                     <div className="hidden md:flex items-center gap-2 mr-2">
                         <div
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${credits < 25
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border cursor-pointer hover:opacity-80 transition-opacity ${credits < ANALYSIS_COST
                                 ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
                                 : "bg-primary/10 text-primary border-primary/20"
                                 }`}
@@ -103,7 +104,7 @@ export function TopBar() {
                             <span className="text-lg">⚡</span>
                             <span>{credits} credits</span>
                         </div>
-                        {credits < 25 && (
+                        {credits < ANALYSIS_COST && (
                             <Button
                                 size="sm"
                                 variant="default"

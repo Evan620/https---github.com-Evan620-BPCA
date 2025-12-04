@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
+import { ANALYSIS_COST } from "@/lib/constants"
 
-export const ANALYSIS_COST = 25
+export { ANALYSIS_COST }
 
 export async function getUserCredits(userId: string): Promise<number> {
     const supabase = await createClient()

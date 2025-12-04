@@ -103,7 +103,7 @@ export async function POST(request: Request) {
                 if (analysis?.project_versions?.projects?.user_id) {
                     const userId = analysis.project_versions.projects.user_id
 
-                    // Refund 25 credits
+                    // Refund 50 credits
                     const { data: currentCredits } = await supabase
                         .from("user_credits")
                         .select("credits")
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
                         await supabase
                             .from("user_credits")
                             .update({
-                                credits: currentCredits.credits + 25,
+                                credits: currentCredits.credits + 50,
                                 updated_at: new Date().toISOString()
                             })
                             .eq("user_id", userId)

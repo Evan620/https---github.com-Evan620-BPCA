@@ -17,6 +17,7 @@ import { StepCodes } from "./step-codes"
 import { StepReview } from "./step-review"
 import { Plus, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { ANALYSIS_COST } from "@/lib/constants"
 
 import { useRouter } from "next/navigation"
 
@@ -69,7 +70,7 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
     }
 
     const handleNewAnalysis = () => {
-        if (credits !== null && credits < 25) {
+        if (credits !== null && credits < ANALYSIS_COST) {
             router.push("/dashboard/upgrade")
             return
         }
@@ -98,7 +99,7 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
     }
 
     const handleSubmit = async () => {
-        if (credits !== null && credits < 25) {
+        if (credits !== null && credits < ANALYSIS_COST) {
             router.push("/dashboard/upgrade")
             return
         }
@@ -160,8 +161,8 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
                     <DialogDescription>
                         Upload a plan and select codes to analyze.
                         {credits !== null && (
-                            <span className={`block mt-1 ${credits < 25 ? "text-red-500" : "text-muted-foreground"}`}>
-                                Cost: 25 credits (Balance: {credits})
+                            <span className={`block mt-1 ${credits < ANALYSIS_COST ? "text-red-500" : "text-muted-foreground"}`}>
+                                Cost: {ANALYSIS_COST} credits (Balance: {credits})
                             </span>
                         )}
                     </DialogDescription>
@@ -216,13 +217,13 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
                         ) : (
                             <Button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting || (credits !== null && credits < 25)}
-                                className={credits !== null && credits < 25 ? "opacity-50 cursor-not-allowed" : ""}
+                                disabled={isSubmitting || (credits !== null && credits < ANALYSIS_COST)}
+                                className={credits !== null && credits < ANALYSIS_COST ? "opacity-50 cursor-not-allowed" : ""}
                             >
                                 {isSubmitting && (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 )}
-                                {credits !== null && credits < 25 ? "Insufficient Credits" : "Start Analysis (25 Credits)"}
+                                {credits !== null && credits < ANALYSIS_COST ? "Insufficient Credits" : `Start Analysis (${ANALYSIS_COST} Credits)`}
                             </Button>
                         )}
                     </div>
