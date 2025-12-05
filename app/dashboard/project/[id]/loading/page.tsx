@@ -55,7 +55,8 @@ export default function AnalysisLoadingPage() {
                         setCurrentStatus('completed')
                         // Wait a moment to show completion, then redirect
                         setTimeout(() => {
-                            router.push(`/dashboard/project/${projectId}/analysis/${analysisId}`)
+                            const showFeedback = searchParams.get("showFeedback")
+                            router.push(`/dashboard/project/${projectId}/analysis/${analysisId}${showFeedback ? "?showFeedback=true" : ""}`)
                         }, 2000)
                     } else if (newStatus === "failed") {
                         await fetchErrorAndFail()
@@ -81,7 +82,8 @@ export default function AnalysisLoadingPage() {
                 clearInterval(pollInterval)
                 setCurrentStatus('completed')
                 setTimeout(() => {
-                    router.push(`/dashboard/project/${projectId}/analysis/${analysisId}`)
+                    const showFeedback = searchParams.get("showFeedback")
+                    router.push(`/dashboard/project/${projectId}/analysis/${analysisId}${showFeedback ? "?showFeedback=true" : ""}`)
                 }, 2000)
             } else if (data?.status === 'failed') {
                 clearInterval(pollInterval)

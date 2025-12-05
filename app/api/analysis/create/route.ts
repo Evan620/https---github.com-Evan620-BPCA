@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server"
 import { createAnalysis } from "@/lib/analysis"
 import { createClient } from "@/lib/supabase/server"
-import { hasEnoughCredits, deductCredits, ANALYSIS_COST } from "@/lib/credits"
+import { hasEnoughCredits, deductCredits, refundCredits, ANALYSIS_COST } from "@/lib/credits"
 
 export async function POST(request: Request) {
+    let user: any = null
+    let creditsDeducted = false
+
     try {
         const { projectId, fileUrl, selectedCodes, description, pageNumbers } = await request.json()
 
@@ -16,7 +19,8 @@ export async function POST(request: Request) {
 
         // Get current user
         const supabase = await createClient()
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        const { data: authData, error: authError } = await supabase.auth.getUser()
+        user = authData?.user
 
         if (authError || !user) {
             return NextResponse.json(
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
                 { status: 500 }
             )
         }
+        creditsDeducted = true
 
         const analysis = await createAnalysis(projectId, fileUrl, selectedCodes, description, pageNumbers)
 
@@ -55,6 +60,17 @@ export async function POST(request: Request) {
         })
     } catch (error) {
         console.error("Error creating analysis:", error)
+
+        // Refund credits if analysis creation failed and credits were deducted
+        if (creditsDeducted && user) {
+            try {
+                await refundCredits(user.id, ANALYSIS_COST)
+                console.log("Credits refunded due to analysis creation failure")
+            } catch (refundError) {
+                console.error("Failed to refund credits after analysis creation error:", refundError)
+            }
+        }
+
         const errorMessage = error instanceof Error ? error.message : (error as any)?.message || "Unknown error"
         return NextResponse.json(
             {

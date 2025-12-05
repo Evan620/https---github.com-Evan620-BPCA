@@ -52,68 +52,119 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
     const [pdfView, setPdfView] = useState<'report' | 'original'>('report')
     const [generatedReportUrl, setGeneratedReportUrl] = useState<string | null>(null)
 
-    useEffect(() => {
-        loadReport()
-    }, [analysisId])
+    const [status, setStatus] = useState<"processing" | "completed" | "failed" | "waiting_for_selection">("processing")
+    const [pollingAttempts, setPollingAttempts] = useState(0)
+    const pollingAttemptsRef = useRef(0) // Track attempts synchronously
+    const MAX_POLLING_ATTEMPTS = 60 // 5 minutes at 5s interval (analyses typically take 3-4 mins)
 
-    // Generate PDF blob URL when report data is loaded
     useEffect(() => {
-        if (rawJsonReport && projectName) {
+        console.log(`[ResultsView] Starting polling with ${MAX_POLLING_ATTEMPTS} max attempts (${MAX_POLLING_ATTEMPTS * 5 / 60} minutes)`)
+        let intervalId: NodeJS.Timeout
+
+        const checkStatus = async () => {
             try {
-                const doc = generateComplianceReport(rawJsonReport, projectName)
-                const pdfBlob = doc.output('blob')
-                const url = URL.createObjectURL(pdfBlob)
-                setGeneratedReportUrl(url)
+                const { data: analysis, error: analysisError } = await supabase
+                    .from("analyses")
+                    .select("status, reports(*), project_versions(projects(name), project_id)")
+                    .eq("id", analysisId)
+                    .single()
 
-                // Cleanup on unmount
-                return () => {
-                    URL.revokeObjectURL(url)
+                if (analysisError) throw analysisError
+
+                if (!analysis) {
+                    throw new Error("Analysis not found")
                 }
+
+                // Update project info if available
+                // Handle project_versions being potentially an array or object depending on Supabase return type
+                const projectVersion = Array.isArray(analysis.project_versions)
+                    ? analysis.project_versions[0]
+                    : analysis.project_versions
+
+                const project = Array.isArray(projectVersion?.projects)
+                    ? projectVersion.projects[0]
+                    : projectVersion?.projects
+
+                if (project?.name) {
+                    setProjectName(project.name)
+                }
+                if (projectVersion?.project_id) {
+                    setProjectId(projectVersion.project_id)
+                }
+
+                setStatus(analysis.status)
+
+                if (analysis.status === 'completed') {
+                    if (analysis.reports && analysis.reports.length > 0) {
+                        processReport(analysis.reports[0])
+                        setLoading(false)
+                        return true // Stop polling
+                    } else {
+                        // Status is completed but report not ready? Keep polling or error?
+                        // Usually they should be atomic, but let's be safe
+                        console.warn("Analysis completed but report not found yet")
+                    }
+                } else if (analysis.status === 'failed') {
+                    setError("Analysis failed. Please try again or contact support.")
+                    setLoading(false)
+                    return true // Stop polling
+                }
+
+                return false // Continue polling
             } catch (err) {
-                console.error('Error generating PDF preview:', err)
+                console.error("Error checking status:", err)
+                // Don't stop polling on transient network errors, but maybe count them?
+                return false
             }
         }
-    }, [rawJsonReport, projectName])
 
-    const loadReport = async () => {
-        try {
+        const startPolling = async () => {
             setLoading(true)
-            setError(null)
+            // Initial check
+            const shouldStop = await checkStatus()
+            if (shouldStop) return
 
-            // Fetch the analysis and its report
-            const { data: analysis, error: analysisError } = await supabase
-                .from("analyses")
-                .select("*, reports(*), project_versions(projects(name))")
-                .eq("id", analysisId)
-                .single()
+            intervalId = setInterval(async () => {
+                // Increment using ref for synchronous access
+                pollingAttemptsRef.current += 1
+                setPollingAttempts(pollingAttemptsRef.current)
 
-            if (analysisError) throw analysisError
+                // Check if we've exceeded the timeout
+                if (pollingAttemptsRef.current >= MAX_POLLING_ATTEMPTS) {
+                    clearInterval(intervalId)
+                    setError("Analysis timed out after 5 minutes. The backend may have failed. Please try again or contact support.")
+                    setLoading(false)
+                    return
+                }
 
-            if (!analysis) {
-                throw new Error("Analysis not found")
-            }
+                const stop = await checkStatus()
+                if (stop) {
+                    clearInterval(intervalId)
+                }
+            }, 5000)
+        }
 
-            // Set project name and ID
-            if (analysis.project_versions?.projects?.name) {
-                setProjectName(analysis.project_versions.projects.name)
-            }
-            if (analysis.project_versions?.project_id) {
-                setProjectId(analysis.project_versions.project_id)
-            }
+        startPolling()
 
-            // Check if report exists
-            if (!analysis.reports || analysis.reports.length === 0) {
-                throw new Error("Report not yet available")
-            }
+        return () => {
+            if (intervalId) clearInterval(intervalId)
+        }
+    }, [analysisId])
 
-            const report = analysis.reports[0]
+    const processReport = (report: any) => {
+        try {
             const jsonReport = report.json_report
-
-            // Store raw JSON for PDF generation
             setRawJsonReport(jsonReport)
 
-            // Parse the report data from n8n
-            // JSON structure: { summary: {...}, "Regulation XX": {...}, "IBC XXX": {...} }
+            // Generate PDF URL for report view
+            try {
+                const doc = generateComplianceReport(jsonReport, projectName)
+                const blob = doc.output('blob')
+                const url = URL.createObjectURL(blob)
+                setGeneratedReportUrl(url)
+            } catch (e) {
+                console.error("Failed to generate report PDF:", e)
+            }
 
             const violations: Violation[] = [];
             let complianceScore = 0;
@@ -195,14 +246,12 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
                 violations,
                 totalViolations: violations.length,
                 criticalViolations: criticalCount,
-                pdfUrl: analysis.pdf_url,
+                pdfUrl: report.annotated_pdf_url, // Use annotated PDF if available
                 annotatedPdfUrl: report.annotated_pdf_url
             })
         } catch (err) {
-            console.error("Error loading report:", err)
-            setError(err instanceof Error ? err.message : "Failed to load report")
-        } finally {
-            setLoading(false)
+            console.error("Error processing report:", err)
+            setError("Failed to process report data")
         }
     }
 
@@ -256,7 +305,16 @@ export function ResultsView({ analysisId }: ResultsViewProps) {
             <div className="flex items-center justify-center h-screen">
                 <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                    <p className="text-muted-foreground">Loading analysis results...</p>
+                    <h2 className="text-xl font-semibold">Analyzing Building Plan</h2>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                        This usually takes about 3 minutes. Please don't close this tab.
+                        We'll notify you when it's ready.
+                    </p>
+                    {pollingAttempts > 12 && (
+                        <p className="text-xs text-muted-foreground animate-pulse">
+                            Still working on it... ({Math.floor(pollingAttempts * 5 / 60)}m elapsed)
+                        </p>
+                    )}
                 </div>
             </div>
         )

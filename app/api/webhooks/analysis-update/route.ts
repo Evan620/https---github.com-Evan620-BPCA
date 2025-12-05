@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+import { ANALYSIS_COST } from "@/lib/constants"
 
 export async function POST(request: Request) {
     try {
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
                         await supabase
                             .from("user_credits")
                             .update({
-                                credits: currentCredits.credits + 50,
+                                credits: currentCredits.credits + ANALYSIS_COST,
                                 updated_at: new Date().toISOString()
                             })
                             .eq("user_id", userId)

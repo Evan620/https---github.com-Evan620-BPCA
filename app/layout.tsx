@@ -15,6 +15,9 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Building Plan Compliance Analysis",
   description: "AI-powered building plan compliance analysis platform",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 import { Providers } from "@/components/providers"

@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/client"
 import { ANALYSIS_COST } from "@/lib/constants"
 
 import { useRouter } from "next/navigation"
+import { FeedbackDialog } from "@/components/feedback/feedback-dialog"
 
 export interface WizardDialogProps {
     open?: boolean
@@ -36,6 +37,7 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
     const [pageNumbers, setPageNumbers] = useState<string>("")
     const [selectedCodes, setSelectedCodes] = useState<string[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [showFeedback, setShowFeedback] = useState(false)
 
     const [credits, setCredits] = useState<number | null>(null)
     const [supabase] = useState(() => createClient())
@@ -140,7 +142,9 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
 
             // Close modal and redirect to loading page
             setOpen(false)
-            window.location.href = `/dashboard/project/${projectId}/loading?analysisId=${analysisId}`
+            // Show feedback dialog is not appropriate here if we redirect immediately.
+            // I will implement it in the result page instead, using a query param.
+            window.location.href = `/dashboard/project/${projectId}/loading?analysisId=${analysisId}&showFeedback=true`
         } catch (error) {
             console.error("Failed to start analysis:", error)
             alert(error instanceof Error ? error.message : "Failed to start analysis. Please try again.")
@@ -150,85 +154,91 @@ export function WizardDialog({ open: controlledOpen, onOpenChange }: WizardDialo
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <Button onClick={handleNewAnalysis}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Analysis
-            </Button>
-            <DialogContent className="sm:max-w-[600px] min-h-[500px] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>New Analysis</DialogTitle>
-                    <DialogDescription>
-                        Upload a plan and select codes to analyze.
-                        {credits !== null && (
-                            <span className={`block mt-1 ${credits < ANALYSIS_COST ? "text-red-500" : "text-muted-foreground"}`}>
-                                Cost: {ANALYSIS_COST} credits (Balance: {credits})
-                            </span>
+        <>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <Button onClick={handleNewAnalysis}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Analysis
+                </Button>
+                <DialogContent className="sm:max-w-[600px] min-h-[500px] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>New Analysis</DialogTitle>
+                        <DialogDescription>
+                            Upload a plan and select codes to analyze.
+                            {credits !== null && (
+                                <span className={`block mt-1 ${credits < ANALYSIS_COST ? "text-red-500" : "text-muted-foreground"}`}>
+                                    Cost: {ANALYSIS_COST} credits (Balance: {credits})
+                                </span>
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 py-6">
+                        {step === 1 && (
+                            <StepUpload onFileSelect={handleFileSelect} selectedFile={file} />
                         )}
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="flex-1 py-6">
-                    {step === 1 && (
-                        <StepUpload onFileSelect={handleFileSelect} selectedFile={file} />
-                    )}
-                    {step === 2 && (
-                        <StepDetails
-                            description={description}
-                            pageNumbers={pageNumbers}
-                            onDescriptionChange={setDescription}
-                            onPageNumbersChange={setPageNumbers}
-                        />
-                    )}
-                    {step === 3 && (
-                        <StepCodes
-                            selectedCodes={selectedCodes}
-                            onCodeToggle={handleCodeToggle}
-                        />
-                    )}
-                    {step === 4 && file && (
-                        <StepReview
-                            file={file}
-                            selectedCodes={selectedCodes}
-                            description={description}
-                            pageNumbers={pageNumbers}
-                        />
-                    )}
-                </div>
+                        {step === 2 && (
+                            <StepDetails
+                                description={description}
+                                pageNumbers={pageNumbers}
+                                onDescriptionChange={setDescription}
+                                onPageNumbersChange={setPageNumbers}
+                            />
+                        )}
+                        {step === 3 && (
+                            <StepCodes
+                                selectedCodes={selectedCodes}
+                                onCodeToggle={handleCodeToggle}
+                            />
+                        )}
+                        {step === 4 && file && (
+                            <StepReview
+                                file={file}
+                                selectedCodes={selectedCodes}
+                                description={description}
+                                pageNumbers={pageNumbers}
+                            />
+                        )}
+                    </div>
 
-                <DialogFooter className="flex justify-between items-center border-t pt-4">
-                    <div className="flex gap-2">
-                        {step > 1 && (
-                            <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                            </Button>
-                        )}
-                    </div>
-                    <div className="flex gap-2">
-                        {step < 4 ? (
-                            <Button
-                                onClick={handleNext}
-                                disabled={
-                                    (step === 1 && !file) ||
-                                    (step === 3 && selectedCodes.length === 0)
-                                }
-                            >
-                                Next <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting || (credits !== null && credits < ANALYSIS_COST)}
-                                className={credits !== null && credits < ANALYSIS_COST ? "opacity-50 cursor-not-allowed" : ""}
-                            >
-                                {isSubmitting && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                {credits !== null && credits < ANALYSIS_COST ? "Insufficient Credits" : `Start Analysis (${ANALYSIS_COST} Credits)`}
-                            </Button>
-                        )}
-                    </div>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    <DialogFooter className="flex justify-between items-center border-t pt-4">
+                        <div className="flex gap-2">
+                            {step > 1 && (
+                                <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
+                            {step < 4 ? (
+                                <Button
+                                    onClick={handleNext}
+                                    disabled={
+                                        (step === 1 && !file) ||
+                                        (step === 3 && selectedCodes.length === 0)
+                                    }
+                                >
+                                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting || (credits !== null && credits < ANALYSIS_COST)}
+                                    className={credits !== null && credits < ANALYSIS_COST ? "opacity-50 cursor-not-allowed" : ""}
+                                >
+                                    {isSubmitting && (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    {credits !== null && credits < ANALYSIS_COST ? "Insufficient Credits" : `Start Analysis (${ANALYSIS_COST} Credits)`}
+                                </Button>
+                            )}
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <FeedbackDialog
+                open={showFeedback}
+                onOpenChange={setShowFeedback}
+            />
+        </>
     )
 }

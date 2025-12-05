@@ -14,7 +14,7 @@ import { FileText, Download, ExternalLink, CheckCircle2, AlertCircle, Clock, Tra
 import { formatDistanceToNow } from "date-fns"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
 interface Analysis {
@@ -34,6 +34,26 @@ interface AnalysisTableProps {
 
 export function AnalysisTable({ analyses, projectId }: AnalysisTableProps) {
     const router = useRouter()
+
+    // Cleanup stalled analyses on mount
+    useEffect(() => {
+        const cleanupAnalyses = async () => {
+            try {
+                const response = await fetch('/api/analysis/cleanup', {
+                    method: 'POST',
+                })
+                const data = await response.json()
+                if (data.cleaned > 0) {
+                    console.log(`Cleaned up ${data.cleaned} stalled analyses`)
+                    router.refresh()
+                }
+            } catch (error) {
+                console.error("Error running cleanup:", error)
+            }
+        }
+
+        cleanupAnalyses()
+    }, [])
 
     const getFileName = (url?: string) => {
         if (!url) return "Unknown Document"
